@@ -12,7 +12,11 @@ const refreshTokenSchema = mongoose.Schema({
     },
     revokedAt: {
         type: Date,
-        required: true,
+        required: function () {
+            return (
+                typeof this.revokedAt === "undefined" || (this.revokedAt != null && typeof this.revokedAt != "string")
+            );
+        },
         default: null,
     },
     createdAt: {

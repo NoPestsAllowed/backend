@@ -24,7 +24,7 @@ router.post("/register", (req, res) => {
         password: bcrypt.hashSync(password, 10),
         token: accessToken,
     });
-    console.log(newUser);
+
     newUser.save().then((user) => {
         const newRefreshToken = new RefreshToken({
             email: user.email,
@@ -34,7 +34,7 @@ router.post("/register", (req, res) => {
             console.log("ready for cookie");
             res.cookie("nopestsallowed_jwt", savedRefreshToken, {
                 httpOnly: true,
-                sameSite: "None",
+                // sameSite: "none",
                 secure: true,
                 maxAge: 24 * 60 * 60 * 1000, // 1 day : 24h * 60min * 60sec * 1000ms
             });
@@ -44,33 +44,32 @@ router.post("/register", (req, res) => {
 });
 
 router.post("/login", (req, res) => {
-    const { username, password } = req.body;
+    const { email, password } = req.body;
 
-    User.findOne({ username: username }).then((user) => {
+    User.findOne({ email: email }).then((user) => {
         if (!user || !bcrypt.compareSync(password, user.password)) {
             return res.status(401).send("Error: Unauthorized");
         }
-        const [accessToken, refreshToken] = generateAccessAndRefreshToken(username);
+        const [accessToken, refreshToken] = generateAccessAndRefreshToken(email);
 
         const newRefreshToken = new RefreshToken({
-            username,
+            email,
             refreshToken,
         });
 
-        RefreshToken.update({});
-
-        newRefreshToken.save().then((savedRefreshToken) => {
-            console.log("ready for cookie", savedRefreshToken.refreshToken);
-            res.cookie("nopestsallowed_jwt", savedRefreshToken.refreshToken, {
-                httpOnly: true,
-                sameSite: "None",
-                secure: true,
-                maxAge: 24 * 60 * 60 * 1000, // 1 day : 24h * 60min * 60sec * 1000ms
-            });
-            return res.json({
-                result: true,
-                token: accessToken,
-                refreshToken: savedRefreshToken.refreshToken,
+        RefreshToken.updateMany({ email: email, revokedAt: null }, { revokedAt: new Date() }).then((resp) => {
+            newRefreshToken.save().then((savedRefreshToken) => {
+                console.log("ready for cookie", savedRefreshToken.refreshToken);
+                res.cookie("nopestsallowed_jwt", savedRefreshToken.refreshToken, {
+                    httpOnly: true,
+                    // sameSite: "none",
+                    secure: true,
+                    maxAge: 24 * 60 * 60 * 1000, // 1 day : 24h * 60min * 60sec * 1000ms
+                });
+                return res.json({
+                    result: true,
+                    token: accessToken,
+                });
             });
         });
     });
