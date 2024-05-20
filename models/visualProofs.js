@@ -47,6 +47,6 @@ const visualProofSchema = mongoose.Schema({
     },
 });
 
-const VisualProof = mongoose.model("visualProofs", visualProofSchema);
+// const VisualProof = mongoose.model("visualProofs", visualProofSchema);
 
-module.exports = VisualProof;
+module.exports = visualProofSchema;

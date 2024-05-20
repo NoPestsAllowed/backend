@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-import visualProofSchema from "./visualProofs";
+const visualProofSchema = require("./visualProofs");
 
 const depositionSchema = mongoose.Schema({
     name: {
