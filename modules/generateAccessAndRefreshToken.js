@@ -1,10 +1,10 @@
 const jwt = require("jsonwebtoken");
 
-const generateAccessAndRefreshToken = (name) => {
-    const accessToken = jwt.sign({ username: name }, process.env.ACCESS_TOKEN_SECRET, {
+const generateAccessAndRefreshToken = (email) => {
+    const accessToken = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, {
         expiresIn: "10s",
     });
-    const refreshToken = jwt.sign({ username: name }, process.env.ACCESS_TOKEN_SECRET, {
+    const refreshToken = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, {
         expiresIn: "1d",
     });
 
