@@ -16,29 +16,35 @@ router.get("/", function (req, res, next) {
 /* Authentication routes goes bellow. */
 router.post("/register", (req, res) => {
     const { firstname, lastname, email, password } = req.body;
-    const [accessToken, refreshToken] = generateAccessAndRefreshToken(email);
-    const newUser = new User({
-        firstname: firstname,
-        lastname: lastname,
-        email: email,
-        password: bcrypt.hashSync(password, 10),
-        token: accessToken,
-    });
-
-    newUser.save().then((user) => {
-        const newRefreshToken = new RefreshToken({
-            email: user.email,
-            refreshToken,
+    console.log(firstname, lastname, email, password);
+    User.findOne({}).then((existingUser) => {
+        if (existingUser) {
+            return res.json({ result: false, message: "User already exist" });
+        }
+        const [accessToken, refreshToken] = generateAccessAndRefreshToken(email);
+        const newUser = new User({
+            firstname: firstname,
+            lastname: lastname,
+            email: email,
+            password: bcrypt.hashSync(password, 10),
+            token: accessToken,
         });
-        newRefreshToken.save().then((savedRefreshToken) => {
-            console.log("ready for cookie");
-            res.cookie("nopestsallowed_jwt", savedRefreshToken, {
-                httpOnly: true,
-                // sameSite: "none",
-                secure: true,
-                maxAge: 24 * 60 * 60 * 1000, // 1 day : 24h * 60min * 60sec * 1000ms
+
+        newUser.save().then((user) => {
+            const newRefreshToken = new RefreshToken({
+                email: user.email,
+                refreshToken,
             });
-            return res.json({ result: true, user: user });
+            newRefreshToken.save().then((savedRefreshToken) => {
+                console.log("ready for cookie");
+                res.cookie("nopestsallowed_jwt", savedRefreshToken, {
+                    httpOnly: true,
+                    // sameSite: "none",
+                    secure: true,
+                    maxAge: 24 * 60 * 60 * 1000, // 1 day : 24h * 60min * 60sec * 1000ms
+                });
+                return res.json({ result: true, user: user });
+            });
         });
     });
 });
@@ -59,7 +65,6 @@ router.post("/login", (req, res) => {
 
         RefreshToken.updateMany({ email: email, revokedAt: null }, { revokedAt: new Date() }).then((resp) => {
             newRefreshToken.save().then((savedRefreshToken) => {
-                console.log("ready for cookie", savedRefreshToken.refreshToken);
                 res.cookie("nopestsallowed_jwt", savedRefreshToken.refreshToken, {
                     httpOnly: true,
                     // sameSite: "none",
