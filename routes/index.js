@@ -7,6 +7,7 @@ const bcrypt = require("bcryptjs");
 const User = require("../models/users");
 const RefreshToken = require("../models/refreshTokens");
 const { generateAccessAndRefreshToken } = require("../modules/generateAccessAndRefreshToken");
+const authenticateUser = require("./middleware/authenticateUser");
 
 /* GET home page. */
 router.get("/", function (req, res, next) {
@@ -42,7 +43,7 @@ router.post("/register", (req, res) => {
                     secure: true,
                     maxAge: 24 * 60 * 60 * 1000, // 1 day : 24h * 60min * 60sec * 1000ms
                 });
-                
+
                 return res.json({ result: true, user: user });
             });
         });
@@ -81,38 +82,42 @@ router.post("/login", (req, res) => {
     });
 });
 
+router.use(authenticateUser);
 // Route de déconnexion
 router.post("/logout", (req, res) => {
     // 1. Récupération du refreshToken depuis les cookies
-    const refreshToken = req.cookies.nopestsallowed_jwt;
-
-    // Vérifie si le refreshToken est présent
-    if (!refreshToken) {
-        return res.status(401).json({ result: false, message: "No token provided" });
-    }
+    // console.log(req.user, req.headers, req.cookies, req.signedCookies);
+    // const refreshToken = req.cookies.nopestsallowed_jwt;
+    // // Vérifie si le refreshToken est présent
+    // if (!refreshToken) {
+    //     return res.status(401).json({ result: false, message: "No token provided" });
+    // }
 
     // 2. Vérifie et révoque le refreshToken s'il est valide
     RefreshToken.findOneAndUpdate(
-        { refreshToken: refreshToken, revokedAt: null }, // Cherche un refreshToken non révoqué
+        { email: req.user.email, revokedAt: null }, // Cherche un refreshToken non révoqué
         { revokedAt: new Date() } // Ajoute une date de révocation
-    ).then((token) => {
-        if (!token) {
-            // Si aucun token valide trouvé
-            return res.status(401).json({ result: false, message: "Invalid token" });
-        }
+    )
+        .then((token) => {
+            console.log("token", token);
+            // if (!token) {
+            //     // Si aucun token valide trouvé
+            //     return res.status(401).json({ result: false, message: "Invalid token" });
+            // }
 
-        // 3. Supprime le cookie du navigateur
-        res.clearCookie("nopestsallowed_jwt", {
-            httpOnly: true,
-            secure: true,
+            // 3. Supprime le cookie du navigateur
+            res.clearCookie("nopestsallowed_jwt", {
+                httpOnly: true,
+                secure: true,
+            });
+
+            // 4. Répondre au client que la déconnexion a réussi
+            return res.json({ result: true, message: "Logged out successfully" });
+        })
+        .catch((error) => {
+            // Gestion des erreurs
+            return res.status(500).json({ result: false, error: error.message });
         });
-
-        // 4. Répondre au client que la déconnexion a réussi
-        return res.json({ result: true, message: "Logged out successfully" });
-    }).catch((error) => {
-        // Gestion des erreurs
-        return res.status(500).json({ result: false, error: error.message });
-    });
 });
 
 module.exports = router;

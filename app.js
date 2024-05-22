@@ -1,6 +1,8 @@
 require("dotenv").config();
 require("./models/connection");
 
+const authenticateUser = require("./routes/middleware/authenticateUser");
+
 var express = require("express");
 var path = require("path");
 var cookieParser = require("cookie-parser");
@@ -21,6 +23,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/", indexRouter);
+// app.use(authenticateUser);
 app.use("/users", usersRouter);
 app.use("/depositions", depositionsRouter);
 
