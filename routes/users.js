@@ -36,7 +36,8 @@ router.put('/update/:id', (req, res) => {
 router.delete('/delete/:id', (req, res) => {
   const id = req.params.id;
 
-  User.deleteOne({_id:id}).then(deletedDoc => {
+  User.deleteOne({_id:id})
+  .then(deletedDoc => {
     if (deletedDoc.deletedCount > 0) { 
         res.status(200).json({ message: "Votre compte a bien été supprimé" });
         // res.redirect('/');
