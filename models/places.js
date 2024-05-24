@@ -36,8 +36,13 @@ const placeSchema = mongoose.Schema({
         ref: "owners",
         required: false,
     },
+    uniqRef: {
+        type: String,
+        required: true,
+    },
 });
 
 const Place = mongoose.model("places", placeSchema);
+const GeoJson = mongoose.model("geojsons", geojsonSchema);
 
-module.exports = Place;
+module.exports = { Place, GeoJson };
