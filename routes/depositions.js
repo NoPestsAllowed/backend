@@ -72,9 +72,11 @@ router.post("/create", (req, res) => {
 });
 
 router.get("/", (req, res) => {
-    Deposition.find().then((data) => {
-        res.json({ result: true, data });
-    });
+    Deposition.find()
+        .populate("placeId")
+        .then((data) => {
+            res.json({ result: true, depositions: data });
+        });
 
     // Supprimer une déposition
     router.delete("/delete", (req, res) => {
@@ -108,6 +110,19 @@ router.get("/", (req, res) => {
                 });
         });
     });
+});
+
+router.get("/:id", (req, res) => {
+    const { id } = req.params;
+    // console.log(req.params, id);
+    Deposition.findById(id)
+        .populate("placeId")
+        .then((deposition) => {
+            if (deposition) {
+                return res.json({ result: true, deposition });
+            }
+            return res.statusCode(404).json({ result: false, message: "deposition not found" });
+        });
 });
 
 // const findOrCreatePlace = async (placeObject) => {
