@@ -76,6 +76,7 @@ router.post("/login", (req, res) => {
                 return res.json({
                     result: true,
                     token: accessToken,
+                    user: user,
                 });
             });
         });
