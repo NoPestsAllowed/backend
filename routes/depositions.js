@@ -6,7 +6,20 @@ const Deposition = require("../models/depositions");
 const { Place, GeoJson } = require("../models/places");
 const { checkBody } = require("../modules/checkBody");
 // const { findOrCreatePlace } = await require("../modules/findOrCreatePlace");
+const nodemailer = require("nodemailer");
 
+// Create a transporter object
+const transporter = nodemailer.createTransport({
+    host: process.env.MAIL_HOST,
+    port: process.env.MAIL_PORT,
+    secure: false, // use SSL
+    auth: {
+        user: process.env.MAIL_USERNAME,
+        pass: process.env.MAIL_PASSWORD,
+    },
+});
+
+// We must rename this route to router.post("/")
 router.post("/create", (req, res) => {
     console.log(req.user);
     if (!checkBody(req.body, ["name", "description", "placeOwnerEmail", "place", "visualProofs"])) {
@@ -21,6 +34,7 @@ router.post("/create", (req, res) => {
         console.log("user exist");
         console.log("start creating depo");
         Place.findOne({ uniqRef: req.body.place.id }).then((place) => {
+            console.log("place", place);
             if (place === null) {
                 const newPlace = new Place({
                     address: formatPlaceAddress(req.body.place),
@@ -39,21 +53,60 @@ router.post("/create", (req, res) => {
                         description: req.body.description,
                         userId: user._id,
                         placeId: savedPlace._id,
+                        placeOwnerEmail: req.body.placeOwnerEmail,
+                        // visualProofs: visualProofs
                     });
 
                     newDeposition.save().then((savedDepo) => {
+                        console.log("start sending mail");
+                        const mailOptions = {
+                            from: "infected@nopestsallowed.test",
+                            to: savedDepo.placeOwnerEmail,
+                            subject: `${formatPlaceAddress(req.body.place)} is infected by pests`,
+                            text: "Act or die !",
+                        };
+
+                        // Send the email
+                        transporter.sendMail(mailOptions, function (error, info) {
+                            if (error) {
+                                console.log("Error:", error);
+                            } else {
+                                console.log("Email sent: " + info.response);
+                            }
+                        });
+
                         return res.json({ result: true, deposition: savedDepo });
                     });
                 });
             } else {
+                console.log("create depo for existing place");
                 const newDeposition = new Deposition({
                     name: req.body.name,
                     description: req.body.description,
                     userId: user._id,
                     placeId: place._id,
+                    placeOwnerEmail: req.body.placeOwnerEmail,
+                    // visualProofs: visualProofs
                 });
 
                 newDeposition.save().then((savedDepo) => {
+                    console.log("start sending mail");
+                    const mailOptions = {
+                        from: "infected@nopestsallowed.test",
+                        to: savedDepo.placeOwnerEmail,
+                        subject: `${formatPlaceAddress(req.body.place)} is infected by pests`,
+                        text: "Act or die !",
+                    };
+
+                    // Send the email
+                    transporter.sendMail(mailOptions, function (error, info) {
+                        if (error) {
+                            console.log("Error:", error);
+                        } else {
+                            console.log("Email sent: " + info.response);
+                        }
+                    });
+
                     return res.json({ result: true, deposition: savedDepo });
                 });
             }
@@ -191,5 +244,11 @@ const formatPlaceAddress = (placeObject) => {
         return resultText;
     }
 };
+
+// Generate signed route using jwt encoding place id / owner mail / expiration date
+router.get("/:id/resolve", (req, res) => {
+    const { signature } = req.query;
+    // validate signature then ...
+});
 
 module.exports = router;
