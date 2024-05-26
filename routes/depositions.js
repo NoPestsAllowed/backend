@@ -7,6 +7,7 @@ const { Place, GeoJson } = require("../models/places");
 const { checkBody } = require("../modules/checkBody");
 // const { findOrCreatePlace } = await require("../modules/findOrCreatePlace");
 const nodemailer = require("nodemailer");
+const { SignedUrl } = require("../modules/generateSignedUrl");
 
 // Create a transporter object
 const transporter = nodemailer.createTransport({
@@ -23,16 +24,17 @@ const transporter = nodemailer.createTransport({
 router.post("/create", (req, res) => {
     console.log(req.user);
     if (!checkBody(req.body, ["name", "description", "placeOwnerEmail", "place", "visualProofs"])) {
-        res.json({ result: false, error: "Missing or empty fields" });
-        return;
+        return res.json({ result: false, error: "Missing or empty fields" });
     }
     User.findOne({ email: req.user.email }).then((user) => {
         if (user === null) {
-            res.json({ result: false, error: "User not found" });
-            return;
+            return res.json({ result: false, error: "User not found" });
         }
         console.log("user exist");
         console.log("start creating depo");
+
+        const signedUrl = new SignedUrl();
+
         Place.findOne({ uniqRef: req.body.place.id }).then((place) => {
             console.log("place", place);
             if (place === null) {
@@ -59,11 +61,23 @@ router.post("/create", (req, res) => {
 
                     newDeposition.save().then((savedDepo) => {
                         console.log("start sending mail");
+                        console.log(req.protocol, req.get("host"), req.originalUrl);
+                        const url = signedUrl.sign(`${req.protocol}://${req.get("host")}/deposition/${savedDepo._id}`, {
+                            ttl: 60 * 60 * 24,
+                            params: {
+                                email: savedDepo.placeOwnerEmail,
+                            },
+                        });
+
                         const mailOptions = {
                             from: "infected@nopestsallowed.test",
                             to: savedDepo.placeOwnerEmail,
                             subject: `${formatPlaceAddress(req.body.place)} is infected by pests`,
                             text: "Act or die !",
+                            html: `
+                                <h1>Loueur de piaule pourrie tu dois agir</h1>
+                                click sur le lien : <a href="${url}">Ici</a>
+                            `,
                         };
 
                         // Send the email
@@ -91,11 +105,23 @@ router.post("/create", (req, res) => {
 
                 newDeposition.save().then((savedDepo) => {
                     console.log("start sending mail");
+                    console.log(req.protocol, req.get("host"), req.originalUrl);
+                    const url = signedUrl.sign(`${req.protocol}://${req.get("host")}/deposition/${savedDepo._id}`, {
+                        ttl: 60 * 60 * 24,
+                        params: {
+                            email: savedDepo.placeOwnerEmail,
+                        },
+                    });
+
                     const mailOptions = {
                         from: "infected@nopestsallowed.test",
                         to: savedDepo.placeOwnerEmail,
                         subject: `${formatPlaceAddress(req.body.place)} is infected by pests`,
                         text: "Act or die !",
+                        html: `
+                            <h1>Loueur de piaule pourrie tu dois agir</h1>
+                            click sur le lien : <a href="${url}">Ici</a>
+                        `,
                     };
 
                     // Send the email
@@ -111,16 +137,6 @@ router.post("/create", (req, res) => {
                 });
             }
         });
-        // findOrCreatePlace(req.body.place).then((place) => {
-        //     console.log("place", place);
-        //     const newDeposition = new Deposition({
-        //         name: req.body.name,
-        //         description: req.body.description,
-        //         userId: user._id,
-        //         placeId: place._id,
-        //     });
-        //     console.log("new depo", newDeposition);
-        // });
     });
 });
 
