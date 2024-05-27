@@ -150,6 +150,7 @@ router.post("/create", authenticateUser, (req, res) => {
 router.get("/", (req, res) => {
     Deposition.find()
         .populate("placeId")
+        .sort({ createdAt: -1 })
         .then((data) => {
             res.json({ result: true, depositions: data });
         });
