@@ -147,7 +147,7 @@ router.post("/create", authenticateUser, (req, res) => {
     });
 });
 
-router.get("/", authenticateUser, (req, res) => {
+router.get("/", (req, res) => {
     Deposition.find()
         .populate("placeId")
         .then((data) => {
