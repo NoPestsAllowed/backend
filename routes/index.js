@@ -83,10 +83,10 @@ router.post("/login", (req, res) => {
     });
 });
 
-router.use(authenticateUser);
+// router.use(authenticateUser);
 
 // Route de déconnexion
-router.post("/logout", (req, res) => {
+router.post("/logout", authenticateUser, (req, res) => {
     // 1. Récupération du refreshToken depuis les cookies
     // console.log(req.user, req.headers, req.cookies, req.signedCookies);
     // const refreshToken = req.cookies.nopestsallowed_jwt;

@@ -8,6 +8,7 @@ const { checkBody } = require("../modules/checkBody");
 // const { findOrCreatePlace } = await require("../modules/findOrCreatePlace");
 const nodemailer = require("nodemailer");
 const { SignedUrl } = require("../modules/generateSignedUrl");
+const authenticateUser = require("./middleware/authenticateUser");
 
 // Create a transporter object
 const transporter = nodemailer.createTransport({
@@ -21,7 +22,7 @@ const transporter = nodemailer.createTransport({
 });
 
 // We must rename this route to router.post("/")
-router.post("/create", (req, res) => {
+router.post("/create", authenticateUser, (req, res) => {
     console.log(req.user);
     if (!checkBody(req.body, ["name", "description", "placeOwnerEmail", "place", "visualProofs"])) {
         return res.json({ result: false, error: "Missing or empty fields" });
@@ -62,12 +63,15 @@ router.post("/create", (req, res) => {
                     newDeposition.save().then((savedDepo) => {
                         console.log("start sending mail");
                         console.log(req.protocol, req.get("host"), req.originalUrl);
-                        const url = signedUrl.sign(`${req.protocol}://${req.get("host")}/deposition/${savedDepo._id}`, {
-                            ttl: 60 * 60 * 24,
-                            params: {
-                                email: savedDepo.placeOwnerEmail,
-                            },
-                        });
+                        const url = signedUrl.sign(
+                            `${req.protocol}://${process.env.FRONTEND_URL}/resolution/${savedDepo._id}`,
+                            {
+                                ttl: 60 * 60 * 24,
+                                params: {
+                                    email: savedDepo.placeOwnerEmail,
+                                },
+                            }
+                        );
 
                         const mailOptions = {
                             from: "infected@nopestsallowed.test",
@@ -106,12 +110,15 @@ router.post("/create", (req, res) => {
                 newDeposition.save().then((savedDepo) => {
                     console.log("start sending mail");
                     console.log(req.protocol, req.get("host"), req.originalUrl);
-                    const url = signedUrl.sign(`${req.protocol}://${req.get("host")}/deposition/${savedDepo._id}`, {
-                        ttl: 60 * 60 * 24,
-                        params: {
-                            email: savedDepo.placeOwnerEmail,
-                        },
-                    });
+                    const url = signedUrl.sign(
+                        `${req.protocol}://${process.env.FRONTEND_URL}/resolution/${savedDepo._id}`,
+                        {
+                            ttl: 60 * 60 * 24,
+                            params: {
+                                email: savedDepo.placeOwnerEmail,
+                            },
+                        }
+                    );
 
                     const mailOptions = {
                         from: "infected@nopestsallowed.test",
@@ -140,7 +147,7 @@ router.post("/create", (req, res) => {
     });
 });
 
-router.get("/", (req, res) => {
+router.get("/", authenticateUser, (req, res) => {
     Deposition.find()
         .populate("placeId")
         .then((data) => {
@@ -148,7 +155,7 @@ router.get("/", (req, res) => {
         });
 
     // Supprimer une déposition
-    router.delete("/delete", (req, res) => {
+    router.delete("/delete", authenticateUser, (req, res) => {
         if (!checkBody(req.body, ["token", "depositionId"])) {
             res.json({ result: false, error: "Missing or empty fields" });
             return;
