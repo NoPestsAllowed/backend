@@ -55,12 +55,12 @@ router.delete("/delete/:id", authenticateUser, (req, res) => {
 
 router.get("/depositions", authenticateUser, (req, res) => {
     const { id } = req.user;
-    console.log(req.user);
-    console.log(id);
+    // console.log(req.user);
+    // console.log(id);
     Deposition.find({ userId: id })
         .populate("placeId")
         .sort({ createdAt: -1 })
-        // .limit(10)
+        .limit(10)
         .then((data) => {
             console.log(data);
             res.json({ result: true, depositions: data });

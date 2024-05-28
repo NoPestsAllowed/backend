@@ -22,7 +22,7 @@ router.post("/register", (req, res) => {
         if (existingUser) {
             return res.json({ result: false, message: "User already exist" });
         }
-        const [accessToken, refreshToken] = generateAccessAndRefreshToken(email);
+        const [accessToken, refreshToken] = generateAccessAndRefreshToken({ email });
         const newUser = new User({
             firstname: firstname,
             lastname: lastname,
@@ -58,7 +58,7 @@ router.post("/login", (req, res) => {
         if (!user || !bcrypt.compareSync(password, user.password)) {
             return res.status(401).send("Error: Unauthorized");
         }
-        const [accessToken, refreshToken] = generateAccessAndRefreshToken(email);
+        const [accessToken, refreshToken] = generateAccessAndRefreshToken({ email, id: user.id });
 
         const newRefreshToken = new RefreshToken({
             email,
