@@ -9,6 +9,13 @@ const { checkBody } = require("../modules/checkBody");
 const nodemailer = require("nodemailer");
 const { SignedUrl } = require("../modules/generateSignedUrl");
 const authenticateUser = require("./middleware/authenticateUser");
+// const analyzeImg = import("../modules/imageAnalizer.mjs").then((analyzer) => {
+//     return analyzer;
+//     // analyzeImg("https://www.service-public.fr/webapp/images/actu/actuextralarge/I6325.jpg").then((res) =>
+//     //     console.log(res)
+//     // );
+// });
+// const { analyzeImg } = require("../modules/imageAnalizer.mjs");
 
 const multer = require("multer");
 const upload = multer({ dest: "./tmp/" });
@@ -27,15 +34,13 @@ const transporter = nodemailer.createTransport({
 
 // We must rename this route to router.post("/")
 router.post("/create", [upload.array("visualProofs"), authenticateUser], async (req, res) => {
-    console.log(req.user, req.files, JSON.parse(req.body.depo).place);
-
     if (!checkBody(req.body, ["name", "description", "placeOwnerEmail", "depo"])) {
         console.log("missing fields");
         return res.json({ result: false, error: "Missing or empty fields" });
     }
 
     const jsonPlace = JSON.parse(req.body.depo).place;
-
+    // console.log(jsonPlace, req.body);
     const user = await User.findOne({ email: req.user.email });
 
     if (user === null) {
@@ -45,7 +50,7 @@ router.post("/create", [upload.array("visualProofs"), authenticateUser], async (
     const place = await findOrCreatePlace(jsonPlace.id, formatPlaceAddress(jsonPlace), jsonPlace.lat, jsonPlace.lon);
 
     const visualProofs = await storePicturesInCloudinary(req.files);
-    console.log(visualProofs);
+
     const newDeposition = new Deposition({
         name: req.body.name,
         description: req.body.description,
@@ -67,6 +72,31 @@ router.post("/create", [upload.array("visualProofs"), authenticateUser], async (
         }),
     });
 
+    // We must analyse pictures before sending to cloudinary
+    let analysisResult = await Promise.all(
+        visualProofs.map(async (proof) => {
+            let result = await (await import("../modules/imageAnalizer.mjs")).analyzeImg(proof.secure_url);
+            return result[0];
+        })
+    );
+
+    analysisResult = analysisResult.filter((item) => typeof item !== "undefined");
+
+    if (analysisResult.length > 0) {
+        let scoresSum = analysisResult.reduce((accumulator, currentValue) => {
+            return accumulator + currentValue.score;
+        }, 0);
+
+        let scoreAvg = scoresSum / analysisResult.length;
+        if (scoreAvg > 0.8) {
+            newDeposition.status = "accepted";
+        } else {
+            newDeposition.status = "rejected";
+        }
+    } else {
+        newDeposition.status = "rejected";
+    }
+
     const deposition = await newDeposition.save();
 
     const signedUrl = new SignedUrl();
@@ -79,131 +109,7 @@ router.post("/create", [upload.array("visualProofs"), authenticateUser], async (
 
     sendMailForDeposition(deposition.placeOwnerEmail, formatPlaceAddress(jsonPlace), url);
 
-    console.log("user", user, "place", place);
-
     return res.json({ result: true, deposition: deposition });
-    // if (!checkBody(req.body, ["name", "description", "placeOwnerEmail", "place", "visualProofs"])) {
-    //     return res.json({ result: false, error: "Missing or empty fields" });
-    // }
-
-    // User.findOne({ email: req.user.email }).then((user) => {
-    //     if (user === null) {
-    //         return res.json({ result: false, error: "User not found" });
-    //     }
-    //     // cloudinary.uploader.upload(req.file.path, { resource_type: "auto" }).then(cloudinaryResult => {
-
-    //     // });
-    //     const signedUrl = new SignedUrl();
-
-    //     Place.findOne({ uniqRef: req.body.place.id }).then((place) => {
-    //         console.log("place", place);
-    //         if (place === null) {
-    //             const newPlace = new Place({
-    //                 address: formatPlaceAddress(req.body.place),
-    //                 geojson: new GeoJson({
-    //                     type: "Point",
-    //                     coordinates: [req.body.place.lat, req.body.place.lon],
-    //                 }),
-    //                 type: "Place",
-    //                 uniqRef: req.body.place.id,
-    //             });
-    //             console.log("creating : ", newPlace);
-    //             newPlace.save().then((savedPlace) => {
-    //                 // return savedPlace;
-    //                 const newDeposition = new Deposition({
-    //                     name: req.body.name,
-    //                     description: req.body.description,
-    //                     userId: user._id,
-    //                     placeId: savedPlace._id,
-    //                     placeOwnerEmail: req.body.placeOwnerEmail,
-    //                     // visualProofs: visualProofs
-    //                 });
-
-    //                 newDeposition.save().then((savedDepo) => {
-    //                     console.log("start sending mail");
-    //                     console.log(req.protocol, req.get("host"), req.originalUrl);
-    //                     const url = signedUrl.sign(
-    //                         `${req.protocol}://${process.env.FRONTEND_URL}/resolution/${savedDepo._id}`,
-    //                         {
-    //                             ttl: 60 * 60 * 24,
-    //                             params: {
-    //                                 email: savedDepo.placeOwnerEmail,
-    //                             },
-    //                         }
-    //                     );
-
-    //                     const mailOptions = {
-    //                         from: "infected@nopestsallowed.test",
-    //                         to: savedDepo.placeOwnerEmail,
-    //                         subject: `${formatPlaceAddress(req.body.place)} is infected by pests`,
-    //                         text: "Act or die !",
-    //                         html: `
-    //                             <h1>Loueur de piaule pourrie tu dois agir</h1>
-    //                             click sur le lien : <a href="${url}">Ici</a>
-    //                         `,
-    //                     };
-
-    //                     // Send the email
-    //                     transporter.sendMail(mailOptions, function (error, info) {
-    //                         if (error) {
-    //                             console.log("Error:", error);
-    //                         } else {
-    //                             console.log("Email sent: " + info.response);
-    //                         }
-    //                     });
-
-    //                     return res.json({ result: true, deposition: savedDepo });
-    //                 });
-    //             });
-    //         } else {
-    //             console.log("create depo for existing place");
-    //             const newDeposition = new Deposition({
-    //                 name: req.body.name,
-    //                 description: req.body.description,
-    //                 userId: user._id,
-    //                 placeId: place._id,
-    //                 placeOwnerEmail: req.body.placeOwnerEmail,
-    //                 // visualProofs: visualProofs
-    //             });
-
-    //             newDeposition.save().then((savedDepo) => {
-    //                 console.log("start sending mail");
-    //                 console.log(req.protocol, req.get("host"), req.originalUrl);
-    //                 const url = signedUrl.sign(
-    //                     `${req.protocol}://${process.env.FRONTEND_URL}/resolution/${savedDepo._id}`,
-    //                     {
-    //                         ttl: 60 * 60 * 24,
-    //                         params: {
-    //                             email: savedDepo.placeOwnerEmail,
-    //                         },
-    //                     }
-    //                 );
-
-    //                 const mailOptions = {
-    //                     from: "infected@nopestsallowed.test",
-    //                     to: savedDepo.placeOwnerEmail,
-    //                     subject: `${formatPlaceAddress(req.body.place)} is infected by pests`,
-    //                     text: "Act or die !",
-    //                     html: `
-    //                         <h1>Loueur de piaule pourrie tu dois agir</h1>
-    //                         click sur le lien : <a href="${url}">Ici</a>
-    //                     `,
-    //                 };
-
-    //                 // Send the email
-    //                 transporter.sendMail(mailOptions, function (error, info) {
-    //                     if (error) {
-    //                         console.log("Error:", error);
-    //                     } else {
-    //                         console.log("Email sent: " + info.response);
-    //                     }
-    //                 });
-
-    //                 return res.json({ result: true, deposition: savedDepo });
-    //             });
-    //         }
-    //     });
-    // });
 });
 
 router.get("/", (req, res) => {
@@ -211,40 +117,40 @@ router.get("/", (req, res) => {
         .populate("placeId")
         .sort({ createdAt: -1 })
         .then((data) => {
-            res.json({ result: true, depositions: data });
+            return res.json({ result: true, depositions: data });
         });
+});
 
-    // Supprimer une déposition
-    router.delete("/delete", authenticateUser, (req, res) => {
-        if (!checkBody(req.body, ["token", "depositionId"])) {
-            res.json({ result: false, error: "Missing or empty fields" });
+// Supprimer une déposition
+router.delete("/delete", authenticateUser, (req, res) => {
+    if (!checkBody(req.body, ["token", "depositionId"])) {
+        res.json({ result: false, error: "Missing or empty fields" });
+        return;
+    }
+
+    User.findOne({ token: req.body.token }).then((user) => {
+        if (user === null) {
+            res.json({ result: false, error: "User not found" });
             return;
         }
 
-        User.findOne({ token: req.body.token }).then((user) => {
-            if (user === null) {
-                res.json({ result: false, error: "User not found" });
-                return;
-            }
+        Deposition.findById(req.body.depositionId)
+            .populate("userId")
+            .populate("placeId")
+            .then((deposition) => {
+                if (!deposition) {
+                    res.json({ result: false, error: "Deposition not found" });
+                    return;
+                } else if (String(deposition.userId._id) !== String(user._id)) {
+                    // ObjectId needs to be converted to string (JavaScript cannot compare two objects)
+                    res.json({ result: false, error: "Deposition can only be deleted by its author" });
+                    return;
+                }
 
-            Deposition.findById(req.body.depositionId)
-                .populate("userId")
-                .populate("placeId")
-                .then((deposition) => {
-                    if (!deposition) {
-                        res.json({ result: false, error: "Deposition not found" });
-                        return;
-                    } else if (String(deposition.userId._id) !== String(user._id)) {
-                        // ObjectId needs to be converted to string (JavaScript cannot compare two objects)
-                        res.json({ result: false, error: "Deposition can only be deleted by its author" });
-                        return;
-                    }
-
-                    Deposition.deleteOne({ _id: deposition._id }).then(() => {
-                        res.json({ result: true });
-                    });
+                Deposition.deleteOne({ _id: deposition._id }).then(() => {
+                    res.json({ result: true });
                 });
-        });
+            });
     });
 });
 
@@ -312,12 +218,12 @@ const formatPlaceAddress = (placeObject) => {
         }
 
         if (placeObject.tags["addr:street"] || placeObject.tags["contact:street"]) {
-            console.log(
-                placeObject,
-                "-" + typeof placeObject.tags["addr:street"] !== "undefined"
-                    ? placeObject.tags["addr:street"]
-                    : placeObject.tags["contact:street"]
-            );
+            // console.log(
+            //     placeObject,
+            //     "-" + typeof placeObject.tags["addr:street"] !== "undefined"
+            //         ? placeObject.tags["addr:street"]
+            //         : placeObject.tags["contact:street"]
+            // );
             resultText += " ";
             resultText +=
                 typeof placeObject.tags["addr:street"] !== "undefined"
@@ -376,10 +282,11 @@ const sendMailForDeposition = (to, location, url) => {
 };
 
 const storePicturesInCloudinary = async (pictures) => {
+    // console.log("p", pictures);
     const result = await Promise.all(
         pictures.map((picture) => cloudinary.uploader.upload(picture.path, { resource_type: "auto" }))
     );
-    console.log("result", result);
+    // console.log("result", result);
     return result;
 };
 module.exports = router;

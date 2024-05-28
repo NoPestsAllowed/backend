@@ -33,6 +33,11 @@ const depositionSchema = mongoose.Schema({
         type: [visualProofSchema],
         required: false,
     },
+    status: {
+        type: String,
+        default: "pending",
+        enum: ["pending", "accepted", "rejected", "resolved"],
+    },
     publishedAt: {
         type: Date,
         required: false,
