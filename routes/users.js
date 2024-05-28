@@ -3,6 +3,7 @@ var router = express.Router();
 const User = require("../models/users");
 const bcrypt = require("bcryptjs");
 const authenticateUser = require("./middleware/authenticateUser");
+const Deposition = require("../models/depositions");
 
 /* GET users listing. */
 router.get("/", function (req, res, next) {
@@ -52,4 +53,18 @@ router.delete("/delete/:id", authenticateUser, (req, res) => {
     });
 });
 
+router.get("/depositions", authenticateUser, (req, res) => {
+    const { id } = req.user;
+    console.log(req.user);
+    console.log(id);
+    Deposition.find({ userId: id })
+        .populate("placeId")
+        .sort({ createdAt: -1 })
+        // .limit(10)
+        .then((data) => {
+            console.log(data);
+            res.json({ result: true, depositions: data });
+        })
+        .catch((err) => console.log(err));
+});
 module.exports = router;
