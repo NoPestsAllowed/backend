@@ -18,6 +18,7 @@ const authenticateUser = require("./middleware/authenticateUser");
 // const { analyzeImg } = require("../modules/imageAnalizer.mjs");
 
 const multer = require("multer");
+const Resolution = require("../models/resolutions");
 const upload = multer({ dest: "./tmp/" });
 const cloudinary = require("cloudinary").v2;
 
@@ -180,6 +181,38 @@ router.get("/:id", (req, res) => {
         });
 });
 
+router.post("/:id/resolve", upload.array("files"), async (req, res) => {
+    const { id } = req.params;
+    const { content } = req.body;
+    // console.log(id, content, req.files);
+    const deposition = await Deposition.findById(id).populate("placeId");
+    console.log(deposition.placeId.geojson.coordinates);
+    const visualProofs = await storePicturesInCloudinary(req.files);
+
+    const newResolution = new Resolution({
+        depositionsId: [id],
+        visualProofs: visualProofs.map((cloudinaryFile) => {
+            return {
+                url: cloudinaryFile.secure_url,
+                longitude: deposition.placeId.geojson.coordinates[1],
+                latitude: deposition.placeId.geojson.coordinates[0],
+                // altitude: jsonPlace.alt,
+                location: new GeoJson({
+                    type: "Point",
+                    coordinates: [deposition.placeId.geojson.coordinates[0], deposition.placeId.geojson.coordinates[1]],
+                }),
+                takenAt: new Date(),
+            };
+        }),
+        text: content,
+    });
+
+    newResolution.save().then((savedDepo) => {
+        res.json({ result: true, resolution: savedDepo });
+    });
+    // console.log(newResolution);
+});
+
 const formatPlaceAddress = (placeObject) => {
     if (placeObject.street) {
         return `${placeObject.tags["addr:housenumber"]} ${placeObject.street}`;
@@ -226,10 +259,10 @@ const formatPlaceAddress = (placeObject) => {
 };
 
 // Generate signed route using jwt encoding place id / owner mail / expiration date
-router.get("/:id/resolve", (req, res) => {
-    const { signature } = req.query;
-    // validate signature then ...
-});
+// router.get("/:id/resolve", (req, res) => {
+//     const { signature } = req.query;
+//     // validate signature then ...
+// });
 
 const findOrCreatePlace = async (ref, address, latitude, longitude) => {
     console.log(ref, address, latitude, longitude);
