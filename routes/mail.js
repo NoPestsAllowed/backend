@@ -5,6 +5,14 @@ const nodemailer = require("nodemailer");
 const { SignedUrl } = require("../modules/generateSignedUrl");
 // import { Signature } from "../modules/generateSignedUrl";
 
+const fs = require("fs");
+const path = require("path");
+const handlebars = require("handlebars");
+
+const templatePath = path.join(__dirname, "../templates/emails/messageSent.hbs");
+const source = fs.readFileSync(templatePath, "utf8");
+const template = handlebars.compile(source);
+
 // Create a transporter object
 const transporter = nodemailer.createTransport({
     host: process.env.MAIL_HOST,
@@ -16,56 +24,107 @@ const transporter = nodemailer.createTransport({
     },
 });
 
-router.get("/test", (req, res) => {
-    // const signature = Signature;
-    let signedUrl = new SignedUrl();
-    // const lundi = signedUrl.sign("Lundi");
-    // const realUrl = signedUrl.sign("http://npa.app", {
-    //     params: {
-    //         email: "monuser@test.test",
-    //     },
-    // });
-    // const anotherRealUrl = signedUrl.sign("http://npa.app", {
-    //     ttl: 60 * 60 * 24,
-    //     params: {
-    //         email: "another@test.test",
-    //     },
-    // });
-    // const expiredUrl = signedUrl.sign("http://npa.app", {
-    //     ttl: 2,
-    //     params: {
-    //         email: "another@test.test",
-    //     },
-    // });
-    // console.log("lundi", lundi);
-    // console.log("realUrl", realUrl);
-    // console.log("anotherRealUrl", anotherRealUrl);
-    // console.log("——— EXTRACTION METHOD ———");
-    // console.log("extract lundi", signedUrl.verify(lundi));
-    // console.log("extract realUrl", signedUrl.verify(realUrl));
-    // console.log("extract anotherRealUrl", signedUrl.verify(anotherRealUrl));
-    // let i = setTimeout(() => {
-    //     console.log("expired", signedUrl.verify(expiredUrl));
-    // }, 3000);
-    // // clearTimeout(i);
+// router.get("/test", (req, res) => {
+//     // const signature = Signature;
+//     let signedUrl = new SignedUrl();
+//     // const lundi = signedUrl.sign("Lundi");
+//     // const realUrl = signedUrl.sign("http://npa.app", {
+//     //     params: {
+//     //         email: "monuser@test.test",
+//     //     },
+//     // });
+//     // const anotherRealUrl = signedUrl.sign("http://npa.app", {
+//     //     ttl: 60 * 60 * 24,
+//     //     params: {
+//     //         email: "another@test.test",
+//     //     },
+//     // });
+//     // const expiredUrl = signedUrl.sign("http://npa.app", {
+//     //     ttl: 2,
+//     //     params: {
+//     //         email: "another@test.test",
+//     //     },
+//     // });
+//     // console.log("lundi", lundi);
+//     // console.log("realUrl", realUrl);
+//     // console.log("anotherRealUrl", anotherRealUrl);
+//     // console.log("——— EXTRACTION METHOD ———");
+//     // console.log("extract lundi", signedUrl.verify(lundi));
+//     // console.log("extract realUrl", signedUrl.verify(realUrl));
+//     // console.log("extract anotherRealUrl", signedUrl.verify(anotherRealUrl));
+//     // let i = setTimeout(() => {
+//     //     console.log("expired", signedUrl.verify(expiredUrl));
+//     // }, 3000);
+//     // // clearTimeout(i);
 
-    const url = signedUrl.sign("http://npa.app", {
-        ttl: 60 * 60 * 24,
-        params: {
-            email: "yourfriend@email.com",
-        },
-    });
+//     const url = signedUrl.sign("http://npa.app", {
+//         ttl: 60 * 60 * 24,
+//         params: {
+//             email: "nopestsallowed@email.com",
+//         },
+//     });
 
-    // Configure the mailoptions object
+//     // Configure the mailoptions object
+//     const mailOptions = {
+//         from: "nopestsallowed@email.com",
+//         to: "yourfriend@email.com",
+//         subject: "Nous souhaitons vous informer concernant votre bien.",
+//         html: template({
+//             address: "1 Rue de la Republique",
+//             createdAt: "27/05/24",
+//             ownerName: "Martin Dupont",
+//             text: "Mon AirBnB est envahi de fourmis!!!",
+//             description: "Bonjour. Nous avons loué AirBnB et à notre arrivée, nous avons vu de nombreuses fourmis courir par terre. Ils sont partout. Nous ne pouvons rien poser par terre! Les fourmis envahissent nos sacs et nos chaussures. Nous aimerions que ce problème soit résolu le plus rapidement possible !",
+//         }),
+//     };
+
+//     // Send the email
+//     transporter.sendMail(mailOptions, function (error, info) {
+//         if (error) {
+//             console.log("Error:", error);
+//         } else {
+//             console.log("Email sent: " + info.response);
+//         }
+//     });
+
+//     res.end()
+// });
+// router.post("/depositions/create", async (req, res) => {
+//     try {
+//         const deposition = req.body;
+//         const mailOptions = {
+//             from: process.env.MAIL_USERNAME,
+//             to: deposition.placeOwnerEmail,
+//             subject: "New Deposition Created",
+//             html: template({
+//                 name: deposition.name,
+//                 createdAt: new Date().toLocaleDateString(),
+//                 description: deposition.description,
+//             }),
+//         };
+//         await transporter.sendMail(mailOptions);
+//         res.status(200).json({ message: "Deposition created and email sent successfully." });
+//     } catch (error) {
+//         console.error("Error creating deposition:", error);
+//         res.status(500).json({ message: "Failed to create deposition and send email." });
+//     }
+// });
+
+router.post("/contact-us", (req, res) => {
+    const {firstname, lastname, email, title, message} = req.body;
+    console.log(firstname, lastname, email, title, message);
+
     const mailOptions = {
-        from: "yourusername@email.com",
-        to: "yourfriend@email.com",
-        subject: "Sending Email using Node.js",
-        text: "That was easy!",
-        html: `
-            <h1>Act or die</h1>
-            now just click : <a href="${url}">This link</a>
-        `,
+        from: email,
+        to: "nous@nopestsallowed.com",
+        subject: "Nouveau message",
+        html: template({
+            firstname: firstname,
+            lastname: lastname,
+            email: email,
+            title: title,
+            message: message,
+        }),
     };
 
     // Send the email
@@ -76,6 +135,7 @@ router.get("/test", (req, res) => {
             console.log("Email sent: " + info.response);
         }
     });
-});
 
+    res.json({result: true, message: "Email sent"});
+})
 module.exports = router;
