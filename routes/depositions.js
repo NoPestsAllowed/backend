@@ -154,6 +154,19 @@ router.delete("/delete", authenticateUser, (req, res) => {
     });
 });
 
+router.get("/search", (req, res) => {
+    const { q } = req.query;
+    console.log(q);
+    let regex = new RegExp(`${q}`, "ig");
+    Place.find({ address: { $regex: regex } }).then((places) => {
+        Deposition.find({ placeId: { $in: places.map((p) => p.id) } })
+            .populate("placeId")
+            .then((depositions) => {
+                return res.json({ result: true, depositions });
+            });
+    });
+});
+
 router.get("/:id", (req, res) => {
     const { id } = req.params;
     // console.log(req.params, id);
@@ -166,28 +179,6 @@ router.get("/:id", (req, res) => {
             return res.statusCode(404).json({ result: false, message: "deposition not found" });
         });
 });
-
-// const findOrCreatePlace = async (placeObject) => {
-//     Place.findOne({ uniqRef: placeObject.id }).then((place) => {
-//         if (place === null) {
-//             const newPlace = new Place({
-//                 address: formatPlaceAddress(placeObject),
-//                 geojson: new GeoJson({
-//                     type: "Point",
-//                     coordinates: [placeObject.lat, placeObject.lon],
-//                 }),
-//                 type: "Place",
-//                 uniqRef: placeObject.id,
-//             });
-//             console.log("creating : ", newPlace);
-//             return newPlace;
-//             // newPlace.save().then((savedPlace) => {
-//             //     return savedPlace;
-//             // });
-//         }
-//         return place;
-//     });
-// };
 
 const formatPlaceAddress = (placeObject) => {
     if (placeObject.street) {
