@@ -18,6 +18,7 @@ const authenticateUser = require("./middleware/authenticateUser");
 // const { analyzeImg } = require("../modules/imageAnalizer.mjs");
 
 const multer = require("multer");
+const Resolution = require("../models/resolutions");
 const upload = multer({ dest: "./tmp/" });
 const cloudinary = require("cloudinary").v2;
 
@@ -34,7 +35,8 @@ const transporter = nodemailer.createTransport({
 
 // We must rename this route to router.post("/")
 router.post("/create", [upload.array("visualProofs"), authenticateUser], async (req, res) => {
-    if (!checkBody(req.body, ["name", "description", "placeOwnerEmail", "depo"])) {
+    // console.log(req.body);
+    if (!checkBody(req.body, ["name", "description", "placeOwnerEmail", "depo", "pestType"])) {
         console.log("missing fields");
         return res.json({ result: false, error: "Missing or empty fields" });
     }
@@ -56,6 +58,7 @@ router.post("/create", [upload.array("visualProofs"), authenticateUser], async (
         description: req.body.description,
         userId: user._id,
         placeId: place._id,
+        type: req.body.pestType,
         placeOwnerEmail: req.body.placeOwnerEmail,
         visualProofs: visualProofs.map((cloudinaryFile) => {
             return {
@@ -72,6 +75,7 @@ router.post("/create", [upload.array("visualProofs"), authenticateUser], async (
         }),
     });
 
+    // console.log("newDeposition", newDeposition);
     // We must analyse pictures before sending to cloudinary
     let analysisResult = await Promise.all(
         visualProofs.map(async (proof) => {
@@ -98,7 +102,7 @@ router.post("/create", [upload.array("visualProofs"), authenticateUser], async (
     }
 
     const deposition = await newDeposition.save();
-
+    console.log(deposition);
     const signedUrl = new SignedUrl();
     const url = signedUrl.sign(`${req.protocol}://${process.env.FRONTEND_URL}/resolution/${deposition._id}`, {
         ttl: 60 * 60 * 24,
@@ -113,7 +117,7 @@ router.post("/create", [upload.array("visualProofs"), authenticateUser], async (
 });
 
 router.get("/", (req, res) => {
-    Deposition.find()
+    Deposition.find({ status: "accepted" })
         .populate("placeId")
         .sort({ createdAt: -1 })
         .then((data) => {
@@ -156,9 +160,9 @@ router.delete("/delete", authenticateUser, async (req, res) => {
 
 router.get("/search", (req, res) => {
     const { q } = req.query;
-    console.log(q);
+    // console.log(q);
     let regex = new RegExp(`${q}`, "ig");
-    Place.find({ address: { $regex: regex } }).then((places) => {
+    Place.find({ address: { $regex: regex }, status: "accepted" }).then((places) => {
         Deposition.find({ placeId: { $in: places.map((p) => p.id) } })
             .populate("placeId")
             .then((depositions) => {
@@ -178,6 +182,63 @@ router.get("/:id", (req, res) => {
             }
             return res.statusCode(404).json({ result: false, message: "deposition not found" });
         });
+});
+
+router.put("/update/:id", (req, res) => {
+    const id = req.params.id;
+    const { name, description } = req.body;
+
+    Deposition.updateOne(
+        { _id: id },
+        {
+            name: name,
+            description: description,
+        }
+    ).then((response) => {
+        res.status(200).json({ result: true, message: "Déposition modifiée avec succès" });
+    });
+});
+router.post("/:id/resolve", upload.array("files"), async (req, res) => {
+    const { id } = req.params;
+    const { content } = req.body;
+    // console.log(id, content, req.files);
+    if (!checkBody(req.body, ["content"])) {
+        res.json({ result: false, error: "Missing or empty fields" });
+        return;
+    }
+    const deposition = await Deposition.findById(id).populate("placeId");
+    // console.log(deposition.placeId.geojson.coordinates);
+    const visualProofs = await storePicturesInCloudinary(req.files);
+
+    const newResolution = new Resolution({
+        depositionsId: [id],
+        visualProofs: visualProofs.map((cloudinaryFile) => {
+            return {
+                url: cloudinaryFile.secure_url,
+                longitude: deposition.placeId.geojson.coordinates[1],
+                latitude: deposition.placeId.geojson.coordinates[0],
+                // altitude: jsonPlace.alt,
+                location: new GeoJson({
+                    type: "Point",
+                    coordinates: [deposition.placeId.geojson.coordinates[0], deposition.placeId.geojson.coordinates[1]],
+                }),
+                takenAt: new Date(),
+            };
+        }),
+        text: content,
+    });
+
+    newResolution.save().then((savedRepo) => {
+        Deposition.updateMany({ _id: { $in: savedRepo.depositionsId } }, { status: "resolved" })
+            .then((depositionsUpdated) => {
+                console.log("depositionsUpdated", depositionsUpdated);
+                res.json({ result: true, resolution: savedRepo });
+            })
+            .catch((err) => {
+                res.json({ result: false, message: "An error as occured solving depositions." });
+            });
+    });
+    // console.log(newResolution);
 });
 
 const formatPlaceAddress = (placeObject) => {
@@ -226,13 +287,13 @@ const formatPlaceAddress = (placeObject) => {
 };
 
 // Generate signed route using jwt encoding place id / owner mail / expiration date
-router.get("/:id/resolve", (req, res) => {
-    const { signature } = req.query;
-    // validate signature then ...
-});
+// router.get("/:id/resolve", (req, res) => {
+//     const { signature } = req.query;
+//     // validate signature then ...
+// });
 
 const findOrCreatePlace = async (ref, address, latitude, longitude) => {
-    console.log(ref, address, latitude, longitude);
+    // console.log(ref, address, latitude, longitude);
     let result = await Place.findOne({ uniqRef: ref });
     if (!result) {
         const newPlace = new Place({

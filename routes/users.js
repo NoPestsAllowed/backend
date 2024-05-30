@@ -4,6 +4,7 @@ const User = require("../models/users");
 const bcrypt = require("bcryptjs");
 const authenticateUser = require("./middleware/authenticateUser");
 const Deposition = require("../models/depositions");
+const { generateAccessAndRefreshToken, clearTokens } = require("../modules/generateAccessAndRefreshToken");
 
 /* GET users listing. */
 router.get("/", function (req, res, next) {
@@ -31,7 +32,7 @@ router.put("/update/:id", authenticateUser, (req, res) => {
             avatarUrl: avatarUrl,
         }
     ).then((response) => {
-        console.log(response);
+        // console.log(response);
         if (response.modifiedCount === 1) {
             res.status(200).json({ result: true, message: "Informations mises à jour avec succès" });
         } else {
@@ -62,9 +63,20 @@ router.get("/depositions", authenticateUser, (req, res) => {
         .sort({ createdAt: -1 })
         .limit(10)
         .then((data) => {
-            console.log(data);
+            // console.log(data);
             res.json({ result: true, depositions: data });
         })
         .catch((err) => console.log(err));
 });
+
+router.get("/me", authenticateUser, (req, res) => {
+    // console.log(req.user);
+    User.findById(req.user.id).then((user) => {
+        if (user) {
+            return res.json({ result: true, user });
+        }
+        return res.json({ result: false, message: "User not found" });
+    });
+});
+
 module.exports = router;
