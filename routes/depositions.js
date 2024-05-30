@@ -156,15 +156,15 @@ router.post("/by-location", (req, res) => {
 
 // Supprimer une déposition
 router.delete("/delete", authenticateUser, (req, res) => {
-    if (!checkBody(req.body, ["token", "depositionId"])) {
+    console.log("user", req.user, "body", req.body);
+    if (!checkBody(req.body, ["depositionId"])) {
         res.json({ result: false, error: "Missing or empty fields" });
         return;
     }
 
-    User.findOne({ token: req.body.token }).then((user) => {
+    User.findOne({ email: req.user.email }).then((user) => {
         if (user === null) {
-            res.json({ result: false, error: "User not found" });
-            return;
+            return res.status(500).json({ result: false, error: "User not found" });
         }
 
         Deposition.findById(req.body.depositionId)
