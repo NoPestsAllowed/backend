@@ -75,7 +75,7 @@ router.post("/create", [upload.array("visualProofs"), authenticateUser], async (
         }),
     });
 
-    console.log("newDeposition", newDeposition);
+    // console.log("newDeposition", newDeposition);
     // We must analyse pictures before sending to cloudinary
     let analysisResult = await Promise.all(
         visualProofs.map(async (proof) => {
@@ -117,7 +117,7 @@ router.post("/create", [upload.array("visualProofs"), authenticateUser], async (
 });
 
 router.get("/", (req, res) => {
-    Deposition.find()
+    Deposition.find({ status: "accepted" })
         .populate("placeId")
         .sort({ createdAt: -1 })
         .then((data) => {
@@ -162,7 +162,7 @@ router.get("/search", (req, res) => {
     const { q } = req.query;
     // console.log(q);
     let regex = new RegExp(`${q}`, "ig");
-    Place.find({ address: { $regex: regex } }).then((places) => {
+    Place.find({ address: { $regex: regex }, status: "accepted" }).then((places) => {
         Deposition.find({ placeId: { $in: places.map((p) => p.id) } })
             .populate("placeId")
             .then((depositions) => {
