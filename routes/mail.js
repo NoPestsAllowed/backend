@@ -64,31 +64,6 @@ const transporter = nodemailer.createTransport({
 //         },
 //     });
 
-//     // Configure the mailoptions object
-//     const mailOptions = {
-//         from: "nopestsallowed@email.com",
-//         to: "yourfriend@email.com",
-//         subject: "Nous souhaitons vous informer concernant votre bien.",
-//         html: template({
-//             address: "1 Rue de la Republique",
-//             createdAt: "27/05/24",
-//             ownerName: "Martin Dupont",
-//             text: "Mon AirBnB est envahi de fourmis!!!",
-//             description: "Bonjour. Nous avons loué AirBnB et à notre arrivée, nous avons vu de nombreuses fourmis courir par terre. Ils sont partout. Nous ne pouvons rien poser par terre! Les fourmis envahissent nos sacs et nos chaussures. Nous aimerions que ce problème soit résolu le plus rapidement possible !",
-//         }),
-//     };
-
-//     // Send the email
-//     transporter.sendMail(mailOptions, function (error, info) {
-//         if (error) {
-//             console.log("Error:", error);
-//         } else {
-//             console.log("Email sent: " + info.response);
-//         }
-//     });
-
-//     res.end()
-// });
 // router.post("/depositions/create", async (req, res) => {
 //     try {
 //         const deposition = req.body;
@@ -117,7 +92,7 @@ router.post("/contact-us", (req, res) => {
     const mailOptions = {
         from: email,
         to: "nous@nopestsallowed.com",
-        subject: "Nouveau message",
+        subject: "Un utilisateur a envoyé un message",
         html: template({
             firstname: firstname,
             lastname: lastname,
@@ -126,7 +101,6 @@ router.post("/contact-us", (req, res) => {
             message: message,
         }),
     };
-
     // Send the email
     transporter.sendMail(mailOptions, function (error, info) {
         if (error) {
@@ -138,4 +112,5 @@ router.post("/contact-us", (req, res) => {
 
     res.json({result: true, message: "Email sent"});
 })
+
 module.exports = router;

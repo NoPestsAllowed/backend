@@ -7,7 +7,6 @@
 			body { font-family: Arial, sans-serif; margin: 40px; background-color: #f9f9f9; color: #333; } h1 { font-size: 24px; margin-bottom: 20px; color:
 			#2c3e50; border-bottom: 2px solid black; } 
             h2 { font-size: 20px; margin-top: 30px; margin-bottom: 10px; color: #34495e; }
-			h2 { font-size: 20px; margin-top: 30px; margin-bottom: 10px; color: #470a07; }
             ul { list-style-type:
 			none; padding-left: 0; } li { padding: 8px 0; } 
             p { background-color: #fff; padding: 20px; border: 5px solid #7a2307 border-radius: 5px; }
@@ -17,15 +16,13 @@
 	</head>
 	<body>
 		<h1>{{to}}</h1>
-		<h2>Bonjour</h2>
-        <img src="https://res.cloudinary.com/dt2vufdzn/image/upload/v1627895269/1b4b8624da3f4800d2bf38dfb88f0138.jpg" alt="Company Logo" style="width: auto; height: auto; margin-bottom: 20px;">
+		<h2>{{subject}}</h2>
 		<ul>
-            <li><strong> À qui cela peut concerner: </strong> {{ownerEmail}}</li>
-			<li><strong>Adresse concerné: </strong> {{address}}</li>
-			<li><strong>Date de création de la déposition: </strong> {{takenAt}}</li>
-            <li><strong>Envoyé par:  </strong>  <p6>NoPestsAllowed</p6></li>
+            <li><strong> Bonjour </strong> {{firstname}}!</li>
+            <li><strong> Company:</strong> {{company}}</li>
+            <li><strong> Lien: </strong> {{lien}}</li>
 		</ul>
-		<h3>Description de problem</h3>
-		<p>{{description}}</p>
+		<h2>Message</h2>
+		<p>{{message}}</p>
 	</body>
 </html>
