@@ -6,7 +6,11 @@ const bcrypt = require("bcryptjs");
 
 const User = require("../models/users");
 const RefreshToken = require("../models/refreshTokens");
-const { generateAccessAndRefreshToken } = require("../modules/generateAccessAndRefreshToken");
+const {
+    generateAccessAndRefreshToken,
+    clearTokens,
+    generateAccessToken,
+} = require("../modules/generateAccessAndRefreshToken");
 const authenticateUser = require("./middleware/authenticateUser");
 const nodemailer = require("nodemailer");
 const fs = require("fs");
@@ -35,7 +39,7 @@ router.get("/", function (req, res, next) {
 /* Authentication routes goes bellow. */
 router.post("/register", (req, res) => {
     const { firstname, lastname, email, password } = req.body;
-    console.log(firstname, lastname, email, password);
+    // console.log(firstname, lastname, email, password);
     User.findOne({ email: email }).then((existingUser) => {
         if (existingUser) {
             return res.json({ result: false, message: "User already exist" });
@@ -50,6 +54,9 @@ router.post("/register", (req, res) => {
         });
 
         newUser.save().then((user) => {
+            const [accessToken] = generateAccessAndRefreshToken({ email: user.email, id: user.id });
+            user.token = accessToken;
+            user.save();
             const newRefreshToken = new RefreshToken({
                 email: user.email,
                 refreshToken,
@@ -58,7 +65,8 @@ router.post("/register", (req, res) => {
                 res.cookie("nopestsallowed_jwt", savedRefreshToken, {
                     httpOnly: true,
                     // sameSite: "none",
-                    secure: true,
+                    secure: false,
+                    signed: true,
                     maxAge: 24 * 60 * 60 * 1000, // 1 day : 24h * 60min * 60sec * 1000ms
                 });
 
@@ -93,13 +101,13 @@ res.json({ result: false, message: error.message });
 
 router.post("/login", (req, res) => {
     const { email, password } = req.body;
-    console.log(email, password);
+    // console.log(email, password);
     User.findOne({ email: email }).then((user) => {
-        console.log("user", user);
+        // console.log("user", user);
         if (!user || !bcrypt.compareSync(password, user.password)) {
             return res.status(401).send("Error: Unauthorized");
         }
-        const [accessToken, refreshToken] = generateAccessAndRefreshToken({ email, id: user.id });
+        const [accessToken, refreshToken] = generateAccessAndRefreshToken({ email: user.email, id: user.id });
 
         const newRefreshToken = new RefreshToken({
             email,
@@ -108,16 +116,24 @@ router.post("/login", (req, res) => {
 
         RefreshToken.updateMany({ email: email, revokedAt: null }, { revokedAt: new Date() }).then((resp) => {
             newRefreshToken.save().then((savedRefreshToken) => {
-                res.cookie("nopestsallowed_jwt", savedRefreshToken.refreshToken, {
+                const cookieTokenContent = {
+                    refreshToken: savedRefreshToken.refreshToken,
+                    userId: user.id,
+                    expirationTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30).getTime(),
+                };
+                res.cookie("nopestsallowed_jwt", cookieTokenContent, {
                     httpOnly: true,
                     // sameSite: "none",
-                    secure: true,
-                    maxAge: 24 * 60 * 60 * 1000, // 1 day : 24h * 60min * 60sec * 1000ms
+                    secure: false,
+                    signed: true,
+                    expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30), // 1 day : 24h * 60min * 60sec * 1000ms
                 });
+
                 return res.json({
                     result: true,
                     token: accessToken,
                     user: user,
+                    expireAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
                 });
             });
         });
@@ -161,6 +177,62 @@ router.post("/logout", authenticateUser, (req, res) => {
             // Gestion des erreurs
             return res.status(500).json({ result: false, error: error.message });
         });
+});
+
+router.get("/refresh", async (req, res) => {
+    // const refreshToken = req.body.refreshToken;
+    const { signedCookies = {} } = req;
+    const { nopestsallowed_jwt } = signedCookies;
+    // console.log(signedCookies, nopestsallowed_jwt);
+
+    if (!nopestsallowed_jwt) {
+        return res.sendStatus(204);
+    }
+
+    const decoded = jwt.verify(nopestsallowed_jwt.refreshToken, process.env.ACCESS_TOKEN_SECRET);
+    const user = await User.findById(decoded.id);
+
+    console.log(decoded);
+
+    if (!user) {
+        await clearTokens(req, res);
+        return res.sendStatus(401);
+    }
+
+    const accessToken = generateAccessToken({ email: user.email, id: user.id });
+
+    return res.json({
+        result: true,
+        token: accessToken,
+        expireAt: new Date(Date.now() + 1),
+    });
+    // const newRefreshToken = new RefreshToken({
+    //     email: user.email,
+    //     refreshToken,
+    // });
+
+    // newRefreshToken.save().then((savedRefreshToken) => {
+    //     const cookieTokenContent = {
+    //         refreshToken: savedRefreshToken.refreshToken,
+    //         userId: user.id,
+    //         expirationTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30).getTime(),
+    //     };
+
+    //     res.cookie("nopestsallowed_jwt", cookieTokenContent, {
+    //         httpOnly: true,
+    //         // sameSite: "none",
+    //         secure: false,
+    //         signed: true,
+    //         expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30), // 1 day : 24h * 60min * 60sec * 1000ms
+    //     });
+
+    //     // return res.sendStatus(204);
+    //     return res.json({
+    //         result: true,
+    //         token: accessToken,
+    //         expireAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
+    //     });
+    // });
 });
 
 module.exports = router;

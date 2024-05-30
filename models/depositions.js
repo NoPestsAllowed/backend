@@ -38,6 +38,12 @@ const depositionSchema = mongoose.Schema({
         default: "pending",
         enum: ["pending", "accepted", "rejected", "resolved"],
     },
+    type: {
+        type: String,
+        required: true,
+        // default: null,
+        // enum: ["pending", "accepted", "rejected", "resolved"],
+    },
     publishedAt: {
         type: Date,
         required: false,
