@@ -18,6 +18,7 @@ const authenticateUser = require("./middleware/authenticateUser");
 // const { analyzeImg } = require("../modules/imageAnalizer.mjs");
 
 const multer = require("multer");
+const Resolution = require("../models/resolutions");
 const upload = multer({ dest: "./tmp/" });
 const cloudinary = require("cloudinary").v2;
 
@@ -154,6 +155,19 @@ router.delete("/delete", authenticateUser, (req, res) => {
     });
 });
 
+router.get("/search", (req, res) => {
+    const { q } = req.query;
+    // console.log(q);
+    let regex = new RegExp(`${q}`, "ig");
+    Place.find({ address: { $regex: regex } }).then((places) => {
+        Deposition.find({ placeId: { $in: places.map((p) => p.id) } })
+            .populate("placeId")
+            .then((depositions) => {
+                return res.json({ result: true, depositions });
+            });
+    });
+});
+
 router.get("/:id", (req, res) => {
     const { id } = req.params;
     // console.log(req.params, id);
@@ -179,27 +193,37 @@ router.put('/update/:id', (req,res) => {
     })
 
 })
-// const findOrCreatePlace = async (placeObject) => {
-//     Place.findOne({ uniqRef: placeObject.id }).then((place) => {
-//         if (place === null) {
-//             const newPlace = new Place({
-//                 address: formatPlaceAddress(placeObject),
-//                 geojson: new GeoJson({
-//                     type: "Point",
-//                     coordinates: [placeObject.lat, placeObject.lon],
-//                 }),
-//                 type: "Place",
-//                 uniqRef: placeObject.id,
-//             });
-//             console.log("creating : ", newPlace);
-//             return newPlace;
-//             // newPlace.save().then((savedPlace) => {
-//             //     return savedPlace;
-//             // });
-//         }
-//         return place;
-//     });
-// };
+router.post("/:id/resolve", upload.array("files"), async (req, res) => {
+    const { id } = req.params;
+    const { content } = req.body;
+    // console.log(id, content, req.files);
+    const deposition = await Deposition.findById(id).populate("placeId");
+    // console.log(deposition.placeId.geojson.coordinates);
+    const visualProofs = await storePicturesInCloudinary(req.files);
+
+    const newResolution = new Resolution({
+        depositionsId: [id],
+        visualProofs: visualProofs.map((cloudinaryFile) => {
+            return {
+                url: cloudinaryFile.secure_url,
+                longitude: deposition.placeId.geojson.coordinates[1],
+                latitude: deposition.placeId.geojson.coordinates[0],
+                // altitude: jsonPlace.alt,
+                location: new GeoJson({
+                    type: "Point",
+                    coordinates: [deposition.placeId.geojson.coordinates[0], deposition.placeId.geojson.coordinates[1]],
+                }),
+                takenAt: new Date(),
+            };
+        }),
+        text: content,
+    });
+
+    newResolution.save().then((savedDepo) => {
+        res.json({ result: true, resolution: savedDepo });
+    });
+    // console.log(newResolution);
+});
 
 const formatPlaceAddress = (placeObject) => {
     if (placeObject.street) {
@@ -247,13 +271,13 @@ const formatPlaceAddress = (placeObject) => {
 };
 
 // Generate signed route using jwt encoding place id / owner mail / expiration date
-router.get("/:id/resolve", (req, res) => {
-    const { signature } = req.query;
-    // validate signature then ...
-});
+// router.get("/:id/resolve", (req, res) => {
+//     const { signature } = req.query;
+//     // validate signature then ...
+// });
 
 const findOrCreatePlace = async (ref, address, latitude, longitude) => {
-    console.log(ref, address, latitude, longitude);
+    // console.log(ref, address, latitude, longitude);
     let result = await Place.findOne({ uniqRef: ref });
     if (!result) {
         const newPlace = new Place({
