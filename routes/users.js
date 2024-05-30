@@ -4,6 +4,7 @@ const User = require("../models/users");
 const bcrypt = require("bcryptjs");
 const authenticateUser = require("./middleware/authenticateUser");
 const Deposition = require("../models/depositions");
+const { generateAccessAndRefreshToken, clearTokens } = require("../modules/generateAccessAndRefreshToken");
 
 /* GET users listing. */
 router.get("/", function (req, res, next) {
@@ -67,4 +68,15 @@ router.get("/depositions", authenticateUser, (req, res) => {
         })
         .catch((err) => console.log(err));
 });
+
+router.get("/me", authenticateUser, (req, res) => {
+    console.log(req.user);
+    User.findById(req.user.id).then((user) => {
+        if (user) {
+            return res.json({ result: true, user });
+        }
+        return res.json({ result: false, message: "User not found" });
+    });
+});
+
 module.exports = router;
