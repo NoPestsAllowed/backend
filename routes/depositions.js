@@ -35,7 +35,8 @@ const transporter = nodemailer.createTransport({
 
 // We must rename this route to router.post("/")
 router.post("/create", [upload.array("visualProofs"), authenticateUser], async (req, res) => {
-    if (!checkBody(req.body, ["name", "description", "placeOwnerEmail", "depo"])) {
+    // console.log(req.body);
+    if (!checkBody(req.body, ["name", "description", "placeOwnerEmail", "depo", "pestType"])) {
         console.log("missing fields");
         return res.json({ result: false, error: "Missing or empty fields" });
     }
@@ -57,6 +58,7 @@ router.post("/create", [upload.array("visualProofs"), authenticateUser], async (
         description: req.body.description,
         userId: user._id,
         placeId: place._id,
+        type: req.body.pestType,
         placeOwnerEmail: req.body.placeOwnerEmail,
         visualProofs: visualProofs.map((cloudinaryFile) => {
             return {
@@ -73,6 +75,7 @@ router.post("/create", [upload.array("visualProofs"), authenticateUser], async (
         }),
     });
 
+    console.log("newDeposition", newDeposition);
     // We must analyse pictures before sending to cloudinary
     let analysisResult = await Promise.all(
         visualProofs.map(async (proof) => {
@@ -99,7 +102,7 @@ router.post("/create", [upload.array("visualProofs"), authenticateUser], async (
     }
 
     const deposition = await newDeposition.save();
-
+    console.log(deposition);
     const signedUrl = new SignedUrl();
     const url = signedUrl.sign(`${req.protocol}://${process.env.FRONTEND_URL}/resolution/${deposition._id}`, {
         ttl: 60 * 60 * 24,
