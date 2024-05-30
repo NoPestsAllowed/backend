@@ -184,22 +184,28 @@ router.get("/:id", (req, res) => {
         });
 });
 
-router.put('/update/:id', (req,res) => {
+router.put("/update/:id", (req, res) => {
     const id = req.params.id;
-    const {name, description} = req.body;
+    const { name, description } = req.body;
 
-    Deposition.updateOne({_id: id},{
-        name: name,
-        description: description,
-    }).then((response) => {
-        res.status(200).json({result: true, message: "Déposition modifiée avec succès"})
-    })
-
-})
+    Deposition.updateOne(
+        { _id: id },
+        {
+            name: name,
+            description: description,
+        }
+    ).then((response) => {
+        res.status(200).json({ result: true, message: "Déposition modifiée avec succès" });
+    });
+});
 router.post("/:id/resolve", upload.array("files"), async (req, res) => {
     const { id } = req.params;
     const { content } = req.body;
     // console.log(id, content, req.files);
+    if (!checkBody(req.body, ["content"])) {
+        res.json({ result: false, error: "Missing or empty fields" });
+        return;
+    }
     const deposition = await Deposition.findById(id).populate("placeId");
     // console.log(deposition.placeId.geojson.coordinates);
     const visualProofs = await storePicturesInCloudinary(req.files);
@@ -222,8 +228,15 @@ router.post("/:id/resolve", upload.array("files"), async (req, res) => {
         text: content,
     });
 
-    newResolution.save().then((savedDepo) => {
-        res.json({ result: true, resolution: savedDepo });
+    newResolution.save().then((savedRepo) => {
+        Deposition.updateMany({ _id: { $in: savedRepo.depositionsId } }, { status: "resolved" })
+            .then((depositionsUpdated) => {
+                console.log("depositionsUpdated", depositionsUpdated);
+                res.json({ result: true, resolution: savedRepo });
+            })
+            .catch((err) => {
+                res.json({ result: false, message: "An error as occured solving depositions." });
+            });
     });
     // console.log(newResolution);
 });
