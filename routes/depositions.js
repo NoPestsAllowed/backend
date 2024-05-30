@@ -167,6 +167,18 @@ router.get("/:id", (req, res) => {
         });
 });
 
+router.put('/update/:id', (req,res) => {
+    const id = req.params.id;
+    const {name, description} = req.body;
+
+    Deposition.updateOne({_id: id},{
+        name: name,
+        description: description,
+    }).then((response) => {
+        res.status(200).json({result: true, message: "Déposition modifiée avec succès"})
+    })
+
+})
 // const findOrCreatePlace = async (placeObject) => {
 //     Place.findOne({ uniqRef: placeObject.id }).then((place) => {
 //         if (place === null) {
