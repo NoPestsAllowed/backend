@@ -157,7 +157,7 @@ router.delete("/delete", authenticateUser, (req, res) => {
 
 router.get("/search", (req, res) => {
     const { q } = req.query;
-    console.log(q);
+    // console.log(q);
     let regex = new RegExp(`${q}`, "ig");
     Place.find({ address: { $regex: regex } }).then((places) => {
         Deposition.find({ placeId: { $in: places.map((p) => p.id) } })
@@ -186,7 +186,7 @@ router.post("/:id/resolve", upload.array("files"), async (req, res) => {
     const { content } = req.body;
     // console.log(id, content, req.files);
     const deposition = await Deposition.findById(id).populate("placeId");
-    console.log(deposition.placeId.geojson.coordinates);
+    // console.log(deposition.placeId.geojson.coordinates);
     const visualProofs = await storePicturesInCloudinary(req.files);
 
     const newResolution = new Resolution({
@@ -265,7 +265,7 @@ const formatPlaceAddress = (placeObject) => {
 // });
 
 const findOrCreatePlace = async (ref, address, latitude, longitude) => {
-    console.log(ref, address, latitude, longitude);
+    // console.log(ref, address, latitude, longitude);
     let result = await Place.findOne({ uniqRef: ref });
     if (!result) {
         const newPlace = new Place({

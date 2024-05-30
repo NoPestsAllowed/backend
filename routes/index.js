@@ -21,7 +21,7 @@ router.get("/", function (req, res, next) {
 /* Authentication routes goes bellow. */
 router.post("/register", (req, res) => {
     const { firstname, lastname, email, password } = req.body;
-    console.log(firstname, lastname, email, password);
+    // console.log(firstname, lastname, email, password);
     User.findOne({ email: email }).then((existingUser) => {
         if (existingUser) {
             return res.json({ result: false, message: "User already exist" });
@@ -60,9 +60,9 @@ router.post("/register", (req, res) => {
 
 router.post("/login", (req, res) => {
     const { email, password } = req.body;
-    console.log(email, password);
+    // console.log(email, password);
     User.findOne({ email: email }).then((user) => {
-        console.log("user", user);
+        // console.log("user", user);
         if (!user || !bcrypt.compareSync(password, user.password)) {
             return res.status(401).send("Error: Unauthorized");
         }
