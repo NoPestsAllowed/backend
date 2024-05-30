@@ -7,6 +7,13 @@ const { Place, GeoJson } = require("../models/places");
 const { checkBody } = require("../modules/checkBody");
 // const { findOrCreatePlace } = await require("../modules/findOrCreatePlace");
 const nodemailer = require("nodemailer");
+const fs = require("fs");
+const path = require("path");
+const handlebars = require("handlebars");
+const templatePath = path.join(__dirname, "../templates/emails/depositionCreated.hbs");
+const source = fs.readFileSync(templatePath, "utf8");
+const template = handlebars.compile(source);
+
 const { SignedUrl } = require("../modules/generateSignedUrl");
 const authenticateUser = require("./middleware/authenticateUser");
 // const analyzeImg = import("../modules/imageAnalizer.mjs").then((analyzer) => {
@@ -111,7 +118,7 @@ router.post("/create", [upload.array("visualProofs"), authenticateUser], async (
         },
     });
 
-    sendMailForDeposition(deposition.placeOwnerEmail, formatPlaceAddress(jsonPlace), url);
+    sendMailForDeposition(deposition, formatPlaceAddress(jsonPlace), url);
 
     return res.json({ result: true, deposition: deposition });
 });
@@ -310,17 +317,18 @@ const findOrCreatePlace = async (ref, address, latitude, longitude) => {
     return result;
 };
 
-const sendMailForDeposition = (to, location, url) => {
+const sendMailForDeposition = (deposition, location, url) => {
     console.log("start sending mail");
     const mailOptions = {
-        from: "infected@nopestsallowed.test",
-        to: to,
-        subject: `${location} is infected by pests`,
-        text: "Act or die !",
-        html: `
-            <h1>Loueur de piaule pourrie tu dois agir</h1>
-            click sur le lien : <a href="${url}">Ici</a>
-        `,
+        from: "nopestsallowed@email.com",
+        to: deposition.placeOwnerEmail,
+        html: template({
+            name: deposition.name,
+            address: location,
+            takenAt: deposition.createdAt.toLocaleString("fr-FR"),
+            ownerEmail: deposition.placeOwnerEmail,
+            description: deposition.description,
+        }),
     };
 
     // Send the email

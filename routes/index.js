@@ -12,6 +12,24 @@ const {
     generateAccessToken,
 } = require("../modules/generateAccessAndRefreshToken");
 const authenticateUser = require("./middleware/authenticateUser");
+const nodemailer = require("nodemailer");
+const fs = require("fs");
+const path = require("path");
+const handlebars = require("handlebars");
+const templatePath = path.join(__dirname, "../templates/emails/accountRegistered.hbs");
+const source = fs.readFileSync(templatePath, "utf8");
+const template = handlebars.compile(source);
+
+// Create a transporter object
+const transporter = nodemailer.createTransport({
+    host: process.env.MAIL_HOST,
+    port: process.env.MAIL_PORT,
+    secure: false, // use SSL
+    auth: {
+        user: process.env.MAIL_USERNAME,
+        pass: process.env.MAIL_PASSWORD,
+    },
+});
 
 /* GET home page. */
 router.get("/", function (req, res, next) {
@@ -52,10 +70,33 @@ router.post("/register", (req, res) => {
                     maxAge: 24 * 60 * 60 * 1000, // 1 day : 24h * 60min * 60sec * 1000ms
                 });
 
-                return res.json({ result: true, user: user });
-            });
+                // return res.json({ result: true, user: user });
+        const mailOptions = {
+            from: firstname,
+            to: "nous@nopestsallowed.com",
+            subject: "Bienvenue chez NoPestsAllowed",
+            html: template({
+                firstname: firstname,
+                company: "NoPestsAllowed",
+                lien: "www.nopestsallowed.com",
+                message: "Bonjour. Nous sommes heureux de vous informer que votre compte a été bien créé. Pour vous connecter, veuillez utiliser votre adresse e-mail et votre mot de passe créés lors de l'inscription. Obliez le mdp? Voici le lien: www.nopestsallowed.com/password. Cordialement, l'equipe de NoPestsAllowed 🐞🪲🐝.",
+            }),
+        };
+        // Send the email
+        transporter.sendMail(mailOptions, function (error, info) {
+            if (error) {
+                console.log("Error:", error);
+            } else {
+                console.log("Email sent: " + info.response);
+            }
         });
+        return res.json({ result: true, user: user });
     });
+});
+})
+.catch((error) => {
+res.json({ result: false, message: error.message });
+});
 });
 
 router.post("/login", (req, res) => {
