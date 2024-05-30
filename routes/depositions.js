@@ -3,19 +3,12 @@ var router = express.Router();
 const User = require("../models/users");
 const Deposition = require("../models/depositions");
 //const Place = require('../models/place');
-const { Place, GeoJson } = require("../models/places");
+const { Place } = require("../models/places");
 const { checkBody } = require("../modules/checkBody");
 // const { findOrCreatePlace } = await require("../modules/findOrCreatePlace");
 const nodemailer = require("nodemailer");
 const { SignedUrl } = require("../modules/generateSignedUrl");
 const authenticateUser = require("./middleware/authenticateUser");
-// const analyzeImg = import("../modules/imageAnalizer.mjs").then((analyzer) => {
-//     return analyzer;
-//     // analyzeImg("https://www.service-public.fr/webapp/images/actu/actuextralarge/I6325.jpg").then((res) =>
-//     //     console.log(res)
-//     // );
-// });
-// const { analyzeImg } = require("../modules/imageAnalizer.mjs");
 
 const multer = require("multer");
 const Resolution = require("../models/resolutions");
@@ -66,10 +59,10 @@ router.post("/create", [upload.array("visualProofs"), authenticateUser], async (
                 longitude: jsonPlace.lon,
                 latitude: jsonPlace.lat,
                 // altitude: jsonPlace.alt,
-                location: new GeoJson({
+                location: {
                     type: "Point",
                     coordinates: [jsonPlace.lat, jsonPlace.lon],
-                }),
+                },
                 takenAt: new Date(),
             };
         }),
@@ -78,20 +71,26 @@ router.post("/create", [upload.array("visualProofs"), authenticateUser], async (
     // console.log("newDeposition", newDeposition);
     // We must analyse pictures before sending to cloudinary
     let analysisResult = await Promise.all(
-        visualProofs.map(async (proof) => {
+        await visualProofs.map(async (proof) => {
             let result = await (await import("../modules/imageAnalizer.mjs")).analyzeImg(proof.secure_url);
-            return result[0];
+            console.log("nalaysis result", result);
+            return result;
         })
     );
-
+    console.log("analysisResult", analysisResult, analysisResult.length);
     analysisResult = analysisResult.filter((item) => typeof item !== "undefined");
 
     if (analysisResult.length > 0) {
         let scoresSum = analysisResult.reduce((accumulator, currentValue) => {
-            return accumulator + currentValue.score;
+            const { score } = currentValue[0];
+            console.log("score", score);
+            console.log("accumulator", accumulator);
+            // console.log(typeof currentValue.score);
+            return accumulator + score;
         }, 0);
-
+        console.log("scoresSum is", scoresSum);
         let scoreAvg = scoresSum / analysisResult.length;
+        console.log("avg", scoreAvg);
         if (scoreAvg > 0.8) {
             newDeposition.status = "accepted";
         } else {
@@ -123,6 +122,36 @@ router.get("/", (req, res) => {
         .then((data) => {
             return res.json({ result: true, depositions: data });
         });
+});
+
+router.get("/last-day", (req, res) => {
+    const now = new Date();
+    const yesterday = new Date(now.setDate(now.getDate() - 1));
+    Deposition.find({ status: "accepted", createdAt: { $gte: yesterday } })
+        .populate("placeId")
+        .sort({ createdAt: -1 })
+        .then((data) => {
+            return res.json({ result: true, depositions: data });
+        });
+});
+
+router.post("/by-location", (req, res) => {
+    const { coords } = req.body;
+    console.log(coords, coords.longitude, coords.latitude);
+    Place.find({
+        geojson: {
+            $near: {
+                $geometry: {
+                    type: "Point",
+                    coordinates: [coords.longitude, coords.latitude],
+                },
+                $maxDistance: 100000,
+                // $minDistance: 100,
+            },
+        },
+    }).then((places) => {
+        console.log("h", places);
+    });
 });
 
 // Supprimer une déposition
@@ -218,10 +247,10 @@ router.post("/:id/resolve", upload.array("files"), async (req, res) => {
                 longitude: deposition.placeId.geojson.coordinates[1],
                 latitude: deposition.placeId.geojson.coordinates[0],
                 // altitude: jsonPlace.alt,
-                location: new GeoJson({
+                location: {
                     type: "Point",
                     coordinates: [deposition.placeId.geojson.coordinates[0], deposition.placeId.geojson.coordinates[1]],
-                }),
+                },
                 takenAt: new Date(),
             };
         }),
@@ -298,10 +327,10 @@ const findOrCreatePlace = async (ref, address, latitude, longitude) => {
     if (!result) {
         const newPlace = new Place({
             address: address,
-            geojson: new GeoJson({
+            geojson: {
                 type: "Point",
                 coordinates: [latitude, longitude],
-            }),
+            },
             type: "Place",
             uniqRef: ref,
         });
