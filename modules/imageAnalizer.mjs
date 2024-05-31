@@ -23,41 +23,72 @@ const classify = async (imageUrl) => {
     return output;
 };
 
-const imgContainPest = (output) => {
-    let regexArray = [];
-    output.map((out) => {
+const translation = {
+    'cockroach': 'cafard',
+    'roach': 'cafard',
+    'flea': 'puce',
+    'bedbugs': 'punaise_de_lit',
+}
+
+const imgContainPest = (classified, pestName) => {
+    const match = [];
+    // console.log('output', classified);
+    const regex = new RegExp(pestName, "ig");
+    classified.map((out) => {
+        console.log(out.label.indexOf(","), out.label.indexOf(", "));
         if (out.label.indexOf(",") !== -1) {
-            out.label.split(", ").map((elm) => {
-                regexArray.push({
-                    score: out.score,
-                    label: out.label,
-                    regex: new RegExp(`^${elm}$`, "ig"),
-                });
-            });
+            console.log('in if for regexArray');
+
+            const elementArray = out.label.split(", ");
+            console.log('elmentArray', elementArray, 'out', out);
+            elementArray.map(element => {
+                if (translation[element.replace(" ", "")].match(regex)) {
+                    match.push({
+                        score: out.score,
+                        label: out.label,
+                        // regex: new RegExp(`^${elm}$`, "ig"),
+                    });
+                }
+            })
         } else {
-            regexArray.push({
+            console.log('in else for regexArray');
+            match.push({
                 score: out.score,
                 label: out.label,
-                regex: new RegExp(`^${out.label}$`, "ig"),
+                // regex: new RegExp(`^${out.label}$`, "ig"),
             });
         }
+        // console.log('regexArray l46', regexArray);
+        // return regexArray;
     });
-    const match = [];
-    pests.map((pestName) => {
-        regexArray.map((regex) => {
-            if (regex.regex.test(pestName)) {
-                match.push({
-                    match: pestName,
-                    score: regex.score,
-                    label: regex.label,
-                });
-            }
-        });
-    });
+    // const match = [];
+    // regexArray.map(regex => {
+        // console.log('regex', regex);
+        // if (regex.regex.test(pestName)) {
+            // match.push({
+                // match: pestName,
+                // score: regex.score,
+                // label: regex.label,
+            // });
+        // }
+    // });
+    // pests.map((pestName) => {
+    //     regexArray.map((regex) => {
+    //         if (regex.regex.test(pestName)) {
+    //             match.push({
+    //                 match: pestName,
+    //                 score: regex.score,
+    //                 label: regex.label,
+    //             });
+    //         }
+    //     });
+    // });
+    console.log('match', match);
     return match;
 };
 
-export const analyzeImg = async (url) => {
-    let analyzed = await classify(url);
-    return imgContainPest(analyzed);
+export const analyzeImg = async (url, pestName) => {
+    let classified = await classify(url);
+    console.log('analyzed',classified);
+    return imgContainPest(classified, pestName);
 };
