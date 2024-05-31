@@ -169,23 +169,23 @@ router.delete("/delete", authenticateUser, (req, res) => {
 
         Deposition.findById(req.body.depositionId)
             .populate("userId")
-            .populate("placeId");
+            .populate("placeId")
+            .then((deposition) => {
+                if (!deposition) {
+                    res.json({ result: false, error: "Deposition not found" });
+                    return;
+                } else if (String(deposition.userId._id) !== String(user._id)) {
+                    // ObjectId needs to be converted to string (JavaScript cannot compare two objects)
+                    res.json({ result: false, error: "Deposition can only be deleted by its author" });
+                    return;
+                }
 
-        if (!deposition) {
-            return res.json({ result: false, error: "Deposition not found" });
-        } else if (String(deposition.userId._id) !== String(user._id)) {
-            return res.json({ result: false, error: "Deposition can only be deleted by its author" });
-        }
-
-        await Deposition.deleteOne({ _id: deposition._id });
-        return res.json({ result: true });
-    } catch (error) {
-        console.error(error);
-        return res.json({ result: false, error: "An error occurred" });
-    }
+                Deposition.deleteOne({ _id: deposition._id }).then(() => {
+                    res.json({ result: true });
+                });
+            });
+    });
 });
-
-
 
 router.get("/search", (req, res) => {
     const { q } = req.query;
