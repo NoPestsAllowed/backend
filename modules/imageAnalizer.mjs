@@ -42,7 +42,8 @@ const imgContainPest = (classified, pestName) => {
             const elementArray = out.label.split(", ");
             console.log('elmentArray', elementArray, 'out', out);
             elementArray.map(element => {
-                if (translation[element.replace(" ", "")]?.match(regex)) {
+                console.log(element, element.replace(" ", ""), translation[element.replace(" ", ""), regex]);
+                if (translation[element.replace(" ", "")] && translation[element.replace(" ", "")].match(regex)) {
                     match.push({
                         score: out.score,
                         label: out.label,
@@ -83,7 +84,7 @@ const imgContainPest = (classified, pestName) => {
     //         }
     //     });
     // });
-    console.log('match', match);
+    console.log('match', match, match.length);
     return match;
 };
 

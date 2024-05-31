@@ -85,7 +85,7 @@ router.post("/create", [upload.array("visualProofs"), authenticateUser], async (
         })
     );
     console.log("analysisResult", analysisResult, analysisResult.length);
-    analysisResult = analysisResult.filter((item) => typeof item !== "undefined");
+    analysisResult = analysisResult.filter((item) => typeof item !== "undefined" && item.length > 0);
 
     if (analysisResult.length > 0) {
         let scoresSum = analysisResult.reduce((accumulator, currentValue) => {
