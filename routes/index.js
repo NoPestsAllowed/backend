@@ -40,63 +40,65 @@ router.get("/", function (req, res, next) {
 router.post("/register", (req, res) => {
     const { firstname, lastname, email, password } = req.body;
     // console.log(firstname, lastname, email, password);
-    User.findOne({ email: email }).then((existingUser) => {
-        if (existingUser) {
-            return res.json({ result: false, message: "User already exist" });
-        }
-        const [accessToken, refreshToken] = generateAccessAndRefreshToken({ email });
-        const newUser = new User({
-            firstname: firstname,
-            lastname: lastname,
-            email: email,
-            password: bcrypt.hashSync(password, 10),
-            token: accessToken,
-        });
-
-        newUser.save().then((user) => {
-            const [accessToken] = generateAccessAndRefreshToken({ email: user.email, id: user.id });
-            user.token = accessToken;
-            user.save();
-            const newRefreshToken = new RefreshToken({
-                email: user.email,
-                refreshToken,
-            });
-            newRefreshToken.save().then((savedRefreshToken) => {
-                res.cookie("nopestsallowed_jwt", savedRefreshToken, {
-                    httpOnly: true,
-                    // sameSite: "none",
-                    secure: false,
-                    signed: true,
-                    maxAge: 24 * 60 * 60 * 1000, // 1 day : 24h * 60min * 60sec * 1000ms
-                });
-
-                // return res.json({ result: true, user: user });
-        const mailOptions = {
-            from: firstname,
-            to: "nous@nopestsallowed.com",
-            subject: "Bienvenue chez NoPestsAllowed",
-            html: template({
-                firstname: firstname,
-                company: "NoPestsAllowed",
-                lien: "www.nopestsallowed.com",
-                message: "Bonjour. Nous sommes heureux de vous informer que votre compte a été bien créé. Pour vous connecter, veuillez utiliser votre adresse e-mail et votre mot de passe créés lors de l'inscription. Obliez le mdp? Voici le lien: www.nopestsallowed.com/password. Cordialement, l'equipe de NoPestsAllowed 🐞🪲🐝.",
-            }),
-        };
-        // Send the email
-        transporter.sendMail(mailOptions, function (error, info) {
-            if (error) {
-                console.log("Error:", error);
-            } else {
-                console.log("Email sent: " + info.response);
+    User.findOne({ email: email })
+        .then((existingUser) => {
+            if (existingUser) {
+                return res.json({ result: false, message: "User already exist" });
             }
+            const [accessToken, refreshToken] = generateAccessAndRefreshToken({ email });
+            const newUser = new User({
+                firstname: firstname,
+                lastname: lastname,
+                email: email,
+                password: bcrypt.hashSync(password, 10),
+                token: accessToken,
+            });
+
+            newUser.save().then((user) => {
+                const [accessToken] = generateAccessAndRefreshToken({ email: user.email, id: user.id });
+                user.token = accessToken;
+                user.save();
+                const newRefreshToken = new RefreshToken({
+                    email: user.email,
+                    refreshToken,
+                });
+                newRefreshToken.save().then((savedRefreshToken) => {
+                    res.cookie("nopestsallowed_jwt", savedRefreshToken, {
+                        httpOnly: true,
+                        // sameSite: "none",
+                        secure: false,
+                        signed: true,
+                        maxAge: 24 * 60 * 60 * 1000, // 1 day : 24h * 60min * 60sec * 1000ms
+                    });
+
+                    // return res.json({ result: true, user: user });
+                    const mailOptions = {
+                        from: "nous@nopestsallowed.com",
+                        to: user.email,
+                        subject: "Bienvenue chez NoPestsAllowed",
+                        html: template({
+                            firstname: firstname,
+                            company: "NoPestsAllowed",
+                            lien: "www.nopestsallowed.com",
+                            message:
+                                "Bonjour. Nous sommes heureux de vous informer que votre compte a été bien créé. Pour vous connecter, veuillez utiliser votre adresse e-mail et votre mot de passe créés lors de l'inscription. Obliez le mdp? Voici le lien: www.nopestsallowed.com/password. Cordialement, l'equipe de NoPestsAllowed 🐞🪲🐝.",
+                        }),
+                    };
+                    // Send the email
+                    transporter.sendMail(mailOptions, function (error, info) {
+                        if (error) {
+                            console.log("Error:", error);
+                        } else {
+                            console.log("Email sent: " + info.response);
+                        }
+                    });
+                    return res.json({ result: true, user: user });
+                });
+            });
+        })
+        .catch((error) => {
+            res.json({ result: false, message: error.message });
         });
-        return res.json({ result: true, user: user });
-    });
-});
-})
-.catch((error) => {
-res.json({ result: false, message: error.message });
-});
 });
 
 router.post("/login", (req, res) => {

@@ -80,11 +80,11 @@ router.post("/create", [upload.array("visualProofs"), authenticateUser], async (
     let analysisResult = await Promise.all(
         await visualProofs.map(async (proof) => {
             let result = await (await import("../modules/imageAnalizer.mjs")).analyzeImg(proof.secure_url);
-            console.log("nalaysis result", result);
+            // console.log("nalaysis result", result);
             return result;
         })
     );
-    console.log("analysisResult", analysisResult, analysisResult.length);
+    // console.log("analysisResult", analysisResult, analysisResult.length);
     analysisResult = analysisResult.filter((item) => typeof item !== "undefined" && item.length > 0);
 
     if (analysisResult.length > 0) {
@@ -96,9 +96,9 @@ router.post("/create", [upload.array("visualProofs"), authenticateUser], async (
             // console.log(typeof currentValue.score);
             return accumulator + score;
         }, 0);
-        console.log("scoresSum is", scoresSum);
+        // console.log("scoresSum is", scoresSum);
         let scoreAvg = scoresSum / analysisResult.length;
-        console.log("avg", scoreAvg);
+        // console.log("avg", scoreAvg);
         if (scoreAvg > 0.8) {
             newDeposition.status = "accepted";
         } else {
@@ -354,12 +354,14 @@ const sendMailForDeposition = (deposition, location, url) => {
     const mailOptions = {
         from: "nopestsallowed@email.com",
         to: deposition.placeOwnerEmail,
+        subject: `${location} is infected by ${deposition.type}`,
         html: template({
             name: deposition.name,
             address: location,
             takenAt: deposition.createdAt.toLocaleString("fr-FR"),
             ownerEmail: deposition.placeOwnerEmail,
             description: deposition.description,
+            url: url,
         }),
     };
 
