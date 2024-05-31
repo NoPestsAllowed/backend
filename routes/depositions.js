@@ -200,9 +200,11 @@ router.get("/search", (req, res) => {
     // console.log(q);
     let regex = new RegExp(`${q}`, "ig");
     Place.find({ address: { $regex: regex }, status: "accepted" }).then((places) => {
+        // console.log(places);
         Deposition.find({ placeId: { $in: places.map((p) => p.id) } })
             .populate("placeId")
             .then((depositions) => {
+                // console.log(depositions);
                 return res.json({ result: true, depositions });
             });
     });
