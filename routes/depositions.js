@@ -89,6 +89,7 @@ router.post("/create", [upload.array("visualProofs"), authenticateUser], async (
 
     if (analysisResult.length > 0) {
         let scoresSum = analysisResult.reduce((accumulator, currentValue) => {
+            console.log(currentValue);
             const { score } = currentValue[0];
             console.log("score", score);
             console.log("accumulator", accumulator);

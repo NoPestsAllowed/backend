@@ -42,7 +42,7 @@ const imgContainPest = (classified, pestName) => {
             const elementArray = out.label.split(", ");
             console.log('elmentArray', elementArray, 'out', out);
             elementArray.map(element => {
-                if (translation[element.replace(" ", "")].match(regex)) {
+                if (translation[element.replace(" ", "")]?.match(regex)) {
                     match.push({
                         score: out.score,
                         label: out.label,
