@@ -28,7 +28,7 @@ const corsOptions = {
             "http://192.168.100.145:3000",
             "http://192.168.100.145:3001",
             "http://192.168.100.145:8081",
-            process.env.FRONTEND_URL,
+            `http://${process.env.FRONTEND_URL}`,
         ];
         if (allowedOrigins.includes(origin) || !origin) {
             callback(null, true);

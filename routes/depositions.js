@@ -42,14 +42,18 @@ router.post("/create", [upload.array("visualProofs"), authenticateUser], async (
     }
 
     const jsonPlace = JSON.parse(req.body.depo).place;
-    // console.log(jsonPlace, req.body);
+
     const user = await User.findOne({ email: req.user.email });
 
     if (user === null) {
         return res.json({ result: false, error: "User not found" });
     }
 
-    const place = await findOrCreatePlace(jsonPlace.id, formatPlaceAddress(jsonPlace), jsonPlace.lat, jsonPlace.lon);
+    const [placeLat, placeLon] = jsonPlace.center
+        ? [jsonPlace.center.lat, jsonPlace.center.lon]
+        : [jsonPlace.lat, jsonPlace.lon];
+    // console.log(placeLat, placeLon);
+    const place = await findOrCreatePlace(jsonPlace.id, formatPlaceAddress(jsonPlace), placeLat, placeLon);
 
     const visualProofs = await storePicturesInCloudinary(req.files);
 
@@ -63,12 +67,12 @@ router.post("/create", [upload.array("visualProofs"), authenticateUser], async (
         visualProofs: visualProofs.map((cloudinaryFile) => {
             return {
                 url: cloudinaryFile.secure_url,
-                longitude: jsonPlace.lon,
-                latitude: jsonPlace.lat,
+                longitude: placeLon,
+                latitude: placeLat,
                 // altitude: jsonPlace.alt,
                 location: {
                     type: "Point",
-                    coordinates: [jsonPlace.lat, jsonPlace.lon],
+                    coordinates: [placeLat, placeLon],
                 },
                 takenAt: new Date(),
             };
@@ -240,7 +244,12 @@ router.put("/update/:id", (req, res) => {
 router.post("/:id/resolve", upload.array("files"), async (req, res) => {
     const { id } = req.params;
     const { content } = req.body;
-    // console.log(id, content, req.files);
+
+    const signedUrl = new SignedUrl();
+    // console.log(req.body.frontendUrl);
+    if (!signedUrl.verify(req.body.frontendUrl)) {
+        return res.json({ result: false, error: "Wrong signature" });
+    }
     if (!checkBody(req.body, ["content"])) {
         res.json({ result: false, error: "Missing or empty fields" });
         return;
