@@ -86,7 +86,7 @@ const transporter = nodemailer.createTransport({
 // });
 
 router.post("/contact-us", (req, res) => {
-    const {firstname, lastname, email, title, message} = req.body;
+    const { firstname, lastname, email, title, message } = req.body;
     console.log(firstname, lastname, email, title, message);
 
     const mailOptions = {
@@ -110,7 +110,16 @@ router.post("/contact-us", (req, res) => {
         }
     });
 
-    res.json({result: true, message: "Email sent"});
-})
+    /*
+        #swagger.responses[200] = {
+            description: 'Send a mail to NoPestsAllowed team.',
+            schema: {
+                result: true,
+                message: "Email sent",
+            },
+        }
+    */
+    res.json({ result: true, message: "Email sent" });
+});
 
 module.exports = router;

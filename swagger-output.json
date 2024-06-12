@@ -1,0 +1,934 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "NoPestsAllowed API",
+    "description": "Backend endpoints for NoPestsAllowed",
+    "version": "1.0.0"
+  },
+  "host": "192.168.1.17:3000",
+  "basePath": "/",
+  "schemes": [
+    "http"
+  ],
+  "paths": {
+    "/register": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "firstname": {
+                  "example": "any"
+                },
+                "lastname": {
+                  "example": "any"
+                },
+                "email": {
+                  "example": "any"
+                },
+                "password": {
+                  "example": "any"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Register a new user.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "boolean",
+                  "example": true
+                },
+                "user": {
+                  "$ref": "#/definitions/User"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/login": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "example": "any"
+                },
+                "password": {
+                  "example": "any"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Login a new user.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "boolean",
+                  "example": true
+                },
+                "token": {
+                  "type": "string",
+                  "example": "zefqsdcsdfsqdw"
+                },
+                "user": {
+                  "$ref": "#/definitions/User"
+                },
+                "expireAt": {
+                  "type": "string",
+                  "example": "2024-05-31T13:04:00.477Z"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/logout": {
+      "post": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Logout a user.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "boolean",
+                  "example": true
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Logged out successfully"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/refresh": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Refresh user.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "boolean",
+                  "example": true
+                },
+                "token": {
+                  "type": "string",
+                  "example": "zefqsdcsdfsqdw"
+                },
+                "expireAt": {
+                  "type": "string",
+                  "example": "2024-05-31T13:04:00.477Z"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/mail/contact-us": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "firstname": {
+                  "example": "any"
+                },
+                "lastname": {
+                  "example": "any"
+                },
+                "email": {
+                  "example": "any"
+                },
+                "title": {
+                  "example": "any"
+                },
+                "message": {
+                  "example": "any"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Send a mail to NoPestsAllowed team.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "boolean",
+                  "example": true
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Email sent"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Get all users.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "users": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/User"
+                  }
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/update/{id}": {
+      "put": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "firstname": {
+                  "example": "any"
+                },
+                "lastname": {
+                  "example": "any"
+                },
+                "dateOfBirth": {
+                  "example": "any"
+                },
+                "password": {
+                  "example": "any"
+                },
+                "avatarUrl": {
+                  "example": "any"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Update user's account.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "boolean",
+                  "example": true
+                },
+                "tmessage": {
+                  "type": "string",
+                  "example": "Informations mises à jour avec succès"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/users/delete/{id}": {
+      "delete": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Delete current user's account",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "boolean",
+                  "example": true
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Votre compte a bien été supprimé"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/users/depositions": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Get all deposition for current user.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "boolean",
+                  "example": true
+                },
+                "depositions": {
+                  "$ref": "#/definitions/Deposition"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/users/me": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Get current authenticated user.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "boolean",
+                  "example": true
+                },
+                "user": {
+                  "$ref": "#/definitions/User"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/depositions/create": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "depo": {
+                  "example": "any"
+                },
+                "name": {
+                  "example": "any"
+                },
+                "description": {
+                  "example": "any"
+                },
+                "pestType": {
+                  "example": "any"
+                },
+                "placeOwnerEmail": {
+                  "example": "any"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Create a new deposition.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "boolean",
+                  "example": true
+                },
+                "deposition": {
+                  "$ref": "#/definitions/Deposition"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/depositions/": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Get all depositions.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "boolean",
+                  "example": true
+                },
+                "depositions": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/User"
+                  }
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/depositions/last-day": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Get deposition for last day.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "boolean",
+                  "example": true
+                },
+                "depositions": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/Deposition"
+                  }
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/depositions/delete": {
+      "delete": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "depositionId": {
+                  "example": "any"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Delete a deposition.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "boolean",
+                  "example": true
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/depositions/search": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search depositions by place.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "boolean",
+                  "example": true
+                },
+                "depositions": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/Deposition"
+                  }
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/depositions/{id}": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Get deposition details.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "boolean",
+                  "example": true
+                },
+                "deposition": {
+                  "$ref": "#/definitions/Deposition"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/depositions/update/{id}": {
+      "put": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "example": "any"
+                },
+                "description": {
+                  "example": "any"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Update a deposition.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "boolean",
+                  "example": true
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Déposition modifiée avec succès"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/depositions/{id}/resolve": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "frontendUrl": {
+                  "example": "any"
+                },
+                "content": {
+                  "example": "any"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resolve deposition.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "resolution": {
+                  "type": "object",
+                  "properties": {
+                    "depositionsId": {
+                      "type": "array",
+                      "example": [
+                        "666a107fe6048363ed27b9e6"
+                      ],
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "visualProofs": {
+                      "type": "array",
+                      "example": [],
+                      "items": {}
+                    },
+                    "status": {
+                      "type": "string",
+                      "example": "pending"
+                    },
+                    "text": {
+                      "type": "string",
+                      "example": "my explication"
+                    },
+                    "_id": {
+                      "type": "string",
+                      "example": "666a10a4e6048363ed27b9fd"
+                    }
+                  }
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "User": {
+      "type": "object",
+      "properties": {
+        "_id": {
+          "type": "string",
+          "example": "6659d91232ca8503efe37500"
+        },
+        "firstname": {
+          "type": "string",
+          "example": "Bob"
+        },
+        "lastname": {
+          "type": "string",
+          "example": "Letesteur "
+        },
+        "email": {
+          "type": "string",
+          "example": "bob@test.test"
+        },
+        "password": {
+          "type": "string",
+          "example": "$2a$10$c1U8Ok9fGHDLz5TuqhThzeMO9/bBFDFLQ/GY0ip7Ex.zqQdNXkCvK"
+        },
+        "token": {
+          "type": "string",
+          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImJvYkB0ZXN0LnRlc3QiLCJpZCI6IjY2NTlkOTEyMzJjYTg1MDNlZmUzNzUwMCIsImlhdCI6MTcxNzE2NDMwNn0.LC5EHwJPhV0fc3RlveoaIiLeP0IYOFKIo_FhPSGpnE4"
+        },
+        "createdAt": {
+          "type": "string",
+          "example": "2024-05-31T14:05:06.830Z"
+        }
+      }
+    },
+    "Geojson": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "example": "Point"
+        },
+        "coordinates": {
+          "type": "array",
+          "example": [
+            48.887552,
+            2.303735
+          ],
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "Place": {
+      "type": "object",
+      "properties": {
+        "_id": {
+          "type": "string",
+          "example": "6659cabfdb384223ae51ce49"
+        },
+        "address": {
+          "type": "string",
+          "example": "56 Boulevard Pereire"
+        },
+        "geojson": {
+          "$ref": "#/definitions/Geojson"
+        },
+        "type": {
+          "type": "string",
+          "example": "Place"
+        },
+        "uniqRef": {
+          "type": "string",
+          "example": "3290452184"
+        }
+      }
+    },
+    "VisualProof": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string",
+          "example": "https://res.cloudinary.com/ds2fqbtai/image/upload/v1717160639/g7ofjv9lndzynetosmn0.jpg"
+        },
+        "longitude": {
+          "type": "number",
+          "example": 2.303735
+        },
+        "latitude": {
+          "type": "number",
+          "example": 48.887552
+        },
+        "location": {
+          "$ref": "#/definitions/Geojson"
+        },
+        "takenAt": {
+          "type": "string",
+          "example": "2024-05-31T13:04:00.476Z"
+        },
+        "_id": {
+          "type": "string",
+          "example": "6659cac0db384223ae51ce4d"
+        }
+      }
+    },
+    "Deposition": {
+      "type": "object",
+      "properties": {
+        "_id": {
+          "type": "string",
+          "example": "6659cac0db384223ae51ce4c"
+        },
+        "name": {
+          "type": "string",
+          "example": "Valide"
+        },
+        "description": {
+          "type": "string",
+          "example": "Y a des cafards "
+        },
+        "placeOwnerEmail": {
+          "type": "string",
+          "example": "test@test.test"
+        },
+        "userId": {
+          "type": "string",
+          "example": "6659c984db384223ae51ce11"
+        },
+        "placeId": {
+          "$ref": "#/definitions/Place"
+        },
+        "visualProofs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/VisualProof"
+          }
+        },
+        "status": {
+          "type": "string",
+          "example": "accepted"
+        },
+        "type": {
+          "type": "string",
+          "example": "cafard"
+        },
+        "createdAt": {
+          "type": "string",
+          "example": "2024-05-31T13:04:00.477Z"
+        }
+      }
+    }
+  }
+}

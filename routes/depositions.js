@@ -35,7 +35,6 @@ const transporter = nodemailer.createTransport({
 
 // We must rename this route to router.post("/")
 router.post("/create", [upload.array("visualProofs"), authenticateUser], async (req, res) => {
-    // console.log(req.body);
     if (!checkBody(req.body, ["name", "description", "placeOwnerEmail", "depo", "pestType"])) {
         console.log("missing fields");
         return res.json({ result: false, error: "Missing or empty fields" });
@@ -52,7 +51,7 @@ router.post("/create", [upload.array("visualProofs"), authenticateUser], async (
     const [placeLat, placeLon] = jsonPlace.center
         ? [jsonPlace.center.lat, jsonPlace.center.lon]
         : [jsonPlace.lat, jsonPlace.lon];
-    // console.log(placeLat, placeLon);
+
     const place = await findOrCreatePlace(jsonPlace.id, formatPlaceAddress(jsonPlace), placeLat, placeLon);
 
     const visualProofs = await storePicturesInCloudinary(req.files);
@@ -79,16 +78,13 @@ router.post("/create", [upload.array("visualProofs"), authenticateUser], async (
         }),
     });
 
-    // console.log("newDeposition", newDeposition);
     // We must analyse pictures before sending to cloudinary
     let analysisResult = await Promise.all(
         await visualProofs.map(async (proof) => {
             let result = await (await import("../modules/imageAnalizer.mjs")).analyzeImg(proof.secure_url);
-            // console.log("nalaysis result", result);
             return result;
         })
     );
-    // console.log("analysisResult", analysisResult, analysisResult.length);
     analysisResult = analysisResult.filter((item) => typeof item !== "undefined" && item.length > 0);
 
     if (analysisResult.length > 0) {
@@ -97,12 +93,12 @@ router.post("/create", [upload.array("visualProofs"), authenticateUser], async (
             const { score } = currentValue[0];
             console.log("score", score);
             console.log("accumulator", accumulator);
-            // console.log(typeof currentValue.score);
+
             return accumulator + score;
         }, 0);
-        // console.log("scoresSum is", scoresSum);
+
         let scoreAvg = scoresSum / analysisResult.length;
-        // console.log("avg", scoreAvg);
+
         if (scoreAvg > 0.8) {
             newDeposition.status = "accepted";
         } else {
@@ -124,6 +120,15 @@ router.post("/create", [upload.array("visualProofs"), authenticateUser], async (
 
     sendMailForDeposition(deposition, formatPlaceAddress(jsonPlace), url);
 
+    /*
+        #swagger.responses[200] = {
+            description: 'Create a new deposition.',
+            schema: {
+                result: true,
+                deposition: {$ref: '#/definitions/Deposition'},
+            },
+        }
+    */
     return res.json({ result: true, deposition: deposition });
 });
 
@@ -132,6 +137,15 @@ router.get("/", (req, res) => {
         .populate("placeId")
         .sort({ createdAt: -1 })
         .then((data) => {
+            /*
+                #swagger.responses[200] = {
+                    description: 'Get all depositions.',
+                    schema: {
+                        result: true,
+                        depositions: [{$ref: '#/definitions/User'}],
+                    },
+                }
+            */
             return res.json({ result: true, depositions: data });
         });
 });
@@ -143,11 +157,21 @@ router.get("/last-day", (req, res) => {
         .populate("placeId")
         .sort({ createdAt: -1 })
         .then((data) => {
+            /*
+                #swagger.responses[200] = {
+                    description: 'Get deposition for last day.',
+                    schema: {
+                        result: true,
+                        depositions: [{$ref: '#/definitions/Deposition'}],
+                    },
+                }
+            */
             return res.json({ result: true, depositions: data });
         });
 });
 
 router.post("/by-location", (req, res) => {
+    // #swagger.ignore = true
     const { coords } = req.body;
     console.log(coords, coords.longitude, coords.latitude);
     Place.find({
@@ -168,7 +192,6 @@ router.post("/by-location", (req, res) => {
 
 // Supprimer une déposition
 router.delete("/delete", authenticateUser, (req, res) => {
-    console.log("user", req.user, "body", req.body);
     if (!checkBody(req.body, ["depositionId"])) {
         res.json({ result: false, error: "Missing or empty fields" });
         return;
@@ -193,6 +216,14 @@ router.delete("/delete", authenticateUser, (req, res) => {
                 }
 
                 Deposition.deleteOne({ _id: deposition._id }).then(() => {
+                    /*
+                        #swagger.responses[200] = {
+                            description: 'Delete a deposition.',
+                            schema: {
+                                result: true,
+                            },
+                        }
+                    */
                     res.json({ result: true });
                 });
             });
@@ -201,14 +232,21 @@ router.delete("/delete", authenticateUser, (req, res) => {
 
 router.get("/search", (req, res) => {
     const { q } = req.query;
-    // console.log(q);
+
     let regex = new RegExp(`${q}`, "ig");
     Place.find({ address: { $regex: regex }, status: "accepted" }).then((places) => {
-        // console.log(places);
         Deposition.find({ placeId: { $in: places.map((p) => p.id) } })
             .populate("placeId")
             .then((depositions) => {
-                // console.log(depositions);
+                /*
+                    #swagger.responses[200] = {
+                        description: 'Search depositions by place.',
+                        schema: {
+                            result: true,
+                            depositions: [{$ref: '#/definitions/Deposition'}],
+                        },
+                    }
+                */
                 return res.json({ result: true, depositions });
             });
     });
@@ -216,11 +254,19 @@ router.get("/search", (req, res) => {
 
 router.get("/:id", (req, res) => {
     const { id } = req.params;
-    // console.log(req.params, id);
     Deposition.findById(id)
         .populate("placeId")
         .then((deposition) => {
             if (deposition) {
+                /*
+                    #swagger.responses[200] = {
+                        description: 'Get deposition details.',
+                        schema: {
+                            result: true,
+                            deposition: {$ref: '#/definitions/Deposition'},
+                        },
+                    }
+                */
                 return res.json({ result: true, deposition });
             }
             return res.statusCode(404).json({ result: false, message: "deposition not found" });
@@ -238,6 +284,15 @@ router.put("/update/:id", (req, res) => {
             description: description,
         }
     ).then((response) => {
+        /*
+            #swagger.responses[200] = {
+                description: 'Update a deposition.',
+                schema: {
+                    result: true,
+                    message: "Déposition modifiée avec succès",
+                },
+            }
+        */
         res.status(200).json({ result: true, message: "Déposition modifiée avec succès" });
     });
 });
@@ -246,7 +301,6 @@ router.post("/:id/resolve", upload.array("files"), async (req, res) => {
     const { content } = req.body;
 
     const signedUrl = new SignedUrl();
-    // console.log(req.body.frontendUrl);
     if (!signedUrl.verify(req.body.frontendUrl)) {
         return res.json({ result: false, error: "Wrong signature" });
     }
@@ -255,7 +309,6 @@ router.post("/:id/resolve", upload.array("files"), async (req, res) => {
         return;
     }
     const deposition = await Deposition.findById(id).populate("placeId");
-    // console.log(deposition.placeId.geojson.coordinates);
     const visualProofs = await storePicturesInCloudinary(req.files);
 
     const newResolution = new Resolution({
@@ -280,13 +333,28 @@ router.post("/:id/resolve", upload.array("files"), async (req, res) => {
         Deposition.updateMany({ _id: { $in: savedRepo.depositionsId } }, { status: "resolved" })
             .then((depositionsUpdated) => {
                 console.log("depositionsUpdated", depositionsUpdated);
+                /*
+                    #swagger.responses[200] = {
+                        description: 'Resolve deposition.',
+                        schema: {
+                            "resolution": {
+                                "depositionsId": [
+                                    "666a107fe6048363ed27b9e6"
+                                ],
+                                "visualProofs": [],
+                                "status": "pending",
+                                "text": "my explication",
+                                "_id": "666a10a4e6048363ed27b9fd",
+                            }
+                        },
+                    }
+                */
                 res.json({ result: true, resolution: savedRepo });
             })
             .catch((err) => {
                 res.json({ result: false, message: "An error as occured solving depositions." });
             });
     });
-    // console.log(newResolution);
 });
 
 const formatPlaceAddress = (placeObject) => {

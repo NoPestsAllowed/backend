@@ -33,6 +33,7 @@ const transporter = nodemailer.createTransport({
 
 /* GET home page. */
 router.get("/", function (req, res, next) {
+    // #swagger.ignore = true
     res.render("index", { title: "Express" });
 });
 
@@ -92,6 +93,15 @@ router.post("/register", (req, res) => {
                             console.log("Email sent: " + info.response);
                         }
                     });
+                    /*
+                        #swagger.responses[200] = {
+                                description: 'Register a new user.',
+                                schema: {
+                                    result: true,
+                                    user: {$ref: '#/definitions/User'}
+                                }
+                        }
+                    */
                     return res.json({ result: true, user: user });
                 });
             });
@@ -103,9 +113,7 @@ router.post("/register", (req, res) => {
 
 router.post("/login", (req, res) => {
     const { email, password } = req.body;
-    // console.log(email, password);
     User.findOne({ email: email }).then((user) => {
-        // console.log("user", user);
         if (!user || !bcrypt.compareSync(password, user.password)) {
             return res.status(401).send("Error: Unauthorized");
         }
@@ -125,12 +133,22 @@ router.post("/login", (req, res) => {
                 };
                 res.cookie("nopestsallowed_jwt", cookieTokenContent, {
                     httpOnly: true,
-                    // sameSite: "none",
                     secure: false,
                     signed: true,
                     expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30), // 1 day : 24h * 60min * 60sec * 1000ms
                 });
 
+                /*
+                    #swagger.responses[200] = {
+                        description: 'Login a new user.',
+                        schema: {
+                            result: true,
+                            token: "zefqsdcsdfsqdw",
+                            user: {$ref: '#/definitions/User'},
+                            expireAt: "2024-05-31T13:04:00.477Z",
+                        },
+                    }
+                */
                 return res.json({
                     result: true,
                     token: accessToken,
@@ -147,7 +165,6 @@ router.post("/login", (req, res) => {
 // Route de déconnexion
 router.post("/logout", authenticateUser, (req, res) => {
     // 1. Récupération du refreshToken depuis les cookies
-    // console.log(req.user, req.headers, req.cookies, req.signedCookies);
     // const refreshToken = req.cookies.nopestsallowed_jwt;
     // // Vérifie si le refreshToken est présent
     // if (!refreshToken) {
@@ -171,7 +188,15 @@ router.post("/logout", authenticateUser, (req, res) => {
                 httpOnly: true,
                 secure: true,
             });
-
+            /*
+                #swagger.responses[200] = {
+                    description: 'Logout a user.',
+                    schema: {
+                        result: true,
+                        message: "Logged out successfully",
+                    },
+                }
+            */
             // 4. Répondre au client que la déconnexion a réussi
             return res.json({ result: true, message: "Logged out successfully" });
         })
@@ -203,6 +228,16 @@ router.get("/refresh", async (req, res) => {
 
     const accessToken = generateAccessToken({ email: user.email, id: user.id });
 
+    /*
+        #swagger.responses[200] = {
+            description: 'Refresh user.',
+            schema: {
+                result: true,
+                token: "zefqsdcsdfsqdw",
+                expireAt: "2024-05-31T13:04:00.477Z",
+            },
+        }
+    */
     return res.json({
         result: true,
         token: accessToken,

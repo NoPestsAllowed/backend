@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "node ./bin/www"
+    "start": "node ./bin/www",
+    "swagger": "node ./swagger.js"
   },
   "dependencies": {
     "@xenova/transformers": "^2.17.1",
@@ -24,5 +25,8 @@
     "node-fetch": "2",
     "nodemailer": "^6.9.13"
   },
-  "packageManager": "yarn@1.22.19+sha1.4ba7fc5c6e704fce2066ecbfb0b0d8976fe62447"
+  "packageManager": "yarn@1.22.19+sha1.4ba7fc5c6e704fce2066ecbfb0b0d8976fe62447",
+  "devDependencies": {
+    "swagger-autogen": "^2.23.7"
+  }
 }

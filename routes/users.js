@@ -9,6 +9,14 @@ const { generateAccessAndRefreshToken, clearTokens } = require("../modules/gener
 /* GET users listing. */
 router.get("/", function (req, res, next) {
     User.find().then((data) => {
+        /*
+            #swagger.responses[200] = {
+                description: 'Get all users.',
+                schema: {
+                    users: [{$ref: '#/definitions/User'}],
+                },
+            }
+        */
         res.json(data);
     });
 });
@@ -32,8 +40,16 @@ router.put("/update/:id", authenticateUser, (req, res) => {
             avatarUrl: avatarUrl,
         }
     ).then((response) => {
-        // console.log(response);
         if (response.modifiedCount === 1) {
+            /*
+                #swagger.responses[200] = {
+                    description: 'Update user\'s account.',
+                    schema: {
+                        result: true,
+                        tmessage: "Informations mises à jour avec succès" },
+                    },
+                }
+            */
             res.status(200).json({ result: true, message: "Informations mises à jour avec succès" });
         } else {
             res.status(400).json({ result: false, error: "Vos modifications n'ont pas été prises en compte" });
@@ -46,8 +62,16 @@ router.delete("/delete/:id", authenticateUser, (req, res) => {
 
     User.deleteOne({ _id: id }).then((deletedDoc) => {
         if (deletedDoc.deletedCount > 0) {
+            /*
+                    #swagger.responses[200] = {
+                        description: 'Delete current user\'s account',
+                        schema: {
+                            result: true,
+                            message: "Votre compte a bien été supprimé",
+                        },
+                    }
+                */
             res.status(200).json({ message: "Votre compte a bien été supprimé" });
-            // res.redirect('/');
         } else {
             res.status(400).json({ result: false, error: "Ce compte n'existe pas" });
         }
@@ -56,23 +80,37 @@ router.delete("/delete/:id", authenticateUser, (req, res) => {
 
 router.get("/depositions", authenticateUser, (req, res) => {
     const { id } = req.user;
-    // console.log(req.user);
-    // console.log(id);
     Deposition.find({ userId: id })
         .populate("placeId")
         .sort({ createdAt: -1 })
         .limit(10)
         .then((data) => {
-            // console.log(data);
+            /*
+                #swagger.responses[200] = {
+                    description: 'Get all deposition for current user.',
+                    schema: {
+                        result: true,
+                        depositions: {$ref: '#/definitions/Deposition'},
+                    },
+                }
+            */
             res.json({ result: true, depositions: data });
         })
         .catch((err) => console.log(err));
 });
 
 router.get("/me", authenticateUser, (req, res) => {
-    // console.log(req.user);
     User.findById(req.user.id).then((user) => {
         if (user) {
+            /*
+                #swagger.responses[200] = {
+                    description: 'Get current authenticated user.',
+                    schema: {
+                        result: true,
+                        user: {$ref: '#/definitions/User'},
+                    },
+                }
+            */
             return res.json({ result: true, user });
         }
         return res.json({ result: false, message: "User not found" });
