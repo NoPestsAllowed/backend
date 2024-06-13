@@ -1,5 +1,16 @@
 const request = require("supertest");
 const app = require("../app");
+const mongoose = require("mongoose");
+
+/* Connecting to the database before each test. */
+beforeEach(async () => {
+    await mongoose.connect(process.env.DB_CONNECTION_STRING);
+});
+
+/* Closing database connection after each test. */
+afterEach(async () => {
+    await mongoose.connection.close();
+});
 
 test("it can register new user", async () => {
     const response = await request(app).post("/register").send({
