@@ -236,6 +236,10 @@ router.delete("/delete", authenticateUser, (req, res) => {
 
 router.get("/search", (req, res) => {
     const { q } = req.query;
+    if (!checkBody(req.query, ["q"])) {
+        res.json({ result: false, error: "Missing search terms" });
+        return;
+    }
 
     let regex = new RegExp(`${q}`, "ig");
     Place.find({ address: { $regex: regex }, status: "accepted" }).then((places) => {
@@ -278,6 +282,10 @@ router.get("/:id", (req, res) => {
 });
 
 router.put("/update/:id", (req, res) => {
+    if (!checkBody(req.body, ["description", "name"])) {
+        res.json({ result: false, error: "Missing or empty fields" });
+        return;
+    }
     const id = req.params.id;
     const { name, description } = req.body;
 
@@ -301,16 +309,16 @@ router.put("/update/:id", (req, res) => {
     });
 });
 router.post("/:id/resolve", upload.array("files"), async (req, res) => {
+    if (!checkBody(req.body, ["content"])) {
+        res.json({ result: false, error: "Missing or empty fields" });
+        return;
+    }
     const { id } = req.params;
     const { content } = req.body;
 
     const signedUrl = new SignedUrl();
     if (!signedUrl.verify(req.body.frontendUrl)) {
         return res.json({ result: false, error: "Wrong signature" });
-    }
-    if (!checkBody(req.body, ["content"])) {
-        res.json({ result: false, error: "Missing or empty fields" });
-        return;
     }
     const deposition = await Deposition.findById(id).populate("placeId");
     const visualProofs = await storePicturesInCloudinary(req.files);

@@ -5,6 +5,7 @@ const bcrypt = require("bcryptjs");
 const authenticateUser = require("./middleware/authenticateUser");
 const Deposition = require("../models/depositions");
 const { generateAccessAndRefreshToken, clearTokens } = require("../modules/generateAccessAndRefreshToken");
+const { checkBody } = require("../modules/checkBody");
 
 /* GET users listing. */
 router.get("/", function (req, res, next) {
@@ -23,6 +24,10 @@ router.get("/", function (req, res, next) {
 
 router.put("/update/:id", authenticateUser, (req, res) => {
     const id = req.params.id;
+    if (!checkBody(req.body, ["firstname", "lastname"])) {
+        console.log("missing fields");
+        return res.json({ result: false, error: "Missing or empty fields" });
+    }
     const { firstname, lastname, dateOfBirth, password, avatarUrl } = req.body;
 
     let hashedPassword;
@@ -59,7 +64,9 @@ router.put("/update/:id", authenticateUser, (req, res) => {
 
 router.delete("/delete/:id", authenticateUser, (req, res) => {
     const id = req.params.id;
-
+    if (!checkBody(req.params, ["id"])) {
+        return res.json({ result: false, error: "Missing user id" });
+    }
     User.deleteOne({ _id: id }).then((deletedDoc) => {
         if (deletedDoc.deletedCount > 0) {
             /*

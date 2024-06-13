@@ -8,6 +8,7 @@ const { SignedUrl } = require("../modules/generateSignedUrl");
 const fs = require("fs");
 const path = require("path");
 const handlebars = require("handlebars");
+const { checkBody } = require("../modules/checkBody");
 
 const templatePath = path.join(__dirname, "../templates/emails/messageSent.hbs");
 const source = fs.readFileSync(templatePath, "utf8");
@@ -86,8 +87,11 @@ const transporter = nodemailer.createTransport({
 // });
 
 router.post("/contact-us", (req, res) => {
+    if (!checkBody(req.body, ["firstname", "lastname", "email", "title", "message"])) {
+        res.json({ result: false, error: "Missing or empty fields" });
+        return;
+    }
     const { firstname, lastname, email, title, message } = req.body;
-    console.log(firstname, lastname, email, title, message);
 
     const mailOptions = {
         from: email,

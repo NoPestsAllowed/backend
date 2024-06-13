@@ -16,6 +16,7 @@ const nodemailer = require("nodemailer");
 const fs = require("fs");
 const path = require("path");
 const handlebars = require("handlebars");
+const { checkBody } = require("../modules/checkBody");
 const templatePath = path.join(__dirname, "../templates/emails/accountRegistered.hbs");
 const source = fs.readFileSync(templatePath, "utf8");
 const template = handlebars.compile(source);
@@ -39,6 +40,10 @@ router.get("/", function (req, res, next) {
 
 /* Authentication routes goes bellow. */
 router.post("/register", (req, res) => {
+    if (!checkBody(req.body, ["firstname", "lastname", "email", "password"])) {
+        res.json({ result: false, error: "Missing or empty fields" });
+        return;
+    }
     const { firstname, lastname, email, password } = req.body;
     // console.log(firstname, lastname, email, password);
     User.findOne({ email: email })
@@ -112,6 +117,10 @@ router.post("/register", (req, res) => {
 });
 
 router.post("/login", (req, res) => {
+    if (!checkBody(req.body, ["email", "password"])) {
+        res.json({ result: false, error: "Missing or empty fields" });
+        return;
+    }
     const { email, password } = req.body;
     User.findOne({ email: email }).then((user) => {
         if (!user || !bcrypt.compareSync(password, user.password)) {
