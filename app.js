@@ -1,6 +1,10 @@
 require("dotenv").config();
 require("./models/connection");
 
+// Documentation
+const swaggerUi = require("swagger-ui-express");
+const swaggerFile = require("./swagger-output.json");
+
 const authenticateUser = require("./routes/middleware/authenticateUser");
 
 var express = require("express");
@@ -48,6 +52,7 @@ app.use(cookieParser(process.env.ACCESS_TOKEN_SECRET));
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use("/doc", swaggerUi.serve, swaggerUi.setup(swaggerFile));
 
 app.use("/", indexRouter);
 app.use("/mail", mailRouter);

@@ -23,7 +23,8 @@
     "morgan": "~1.9.1",
     "multer": "^1.4.5-lts.1",
     "node-fetch": "2",
-    "nodemailer": "^6.9.13"
+    "nodemailer": "^6.9.13",
+    "swagger-ui-express": "^5.0.1"
   },
   "packageManager": "yarn@1.22.19+sha1.4ba7fc5c6e704fce2066ecbfb0b0d8976fe62447",
   "devDependencies": {

@@ -172,6 +172,10 @@ router.get("/last-day", (req, res) => {
 
 router.post("/by-location", (req, res) => {
     // #swagger.ignore = true
+    if (!checkBody(req.body, ["coords"])) {
+        res.json({ result: false, error: "No location provided." });
+        return;
+    }
     const { coords } = req.body;
     console.log(coords, coords.longitude, coords.latitude);
     Place.find({
@@ -181,7 +185,7 @@ router.post("/by-location", (req, res) => {
                     type: "Point",
                     coordinates: [coords.longitude, coords.latitude],
                 },
-                $maxDistance: 100000,
+                $maxDistance: 1000,
                 // $minDistance: 100,
             },
         },
