@@ -2,9 +2,9 @@
 const config = {
     verbose: true,
     testEnvironment: "node",
-    globalSetup: "<rootDir>/tests/utils/globalSetup.js",
-    globalTeardown: "<rootDir>/tests/utils/globalTeardown.js",
-    setupFilesAfterEnv: ["<rootDir>/tests/utils/setup.js"],
+    globalSetup: "./utils/globalSetup.js",
+    globalTeardown: "./utils/globalTeardown.js",
+    setupFilesAfterEnv: ["./utils/setup.js"],
 };
 
 module.exports = config;
