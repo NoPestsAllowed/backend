@@ -3,9 +3,10 @@ const app = require("../app");
 const User = require("../models/users");
 // const mongoose = require("mongoose");
 
-// beforeEach(async () => {
-//     global.console = { log: jest.fn() };
-// });
+beforeEach(async () => {
+    await User.deleteMany({});
+    global.console = { log: jest.fn() };
+});
 
 test("it can register new user", async () => {
     const response = await request(app).post("/register").send({
@@ -18,16 +19,12 @@ test("it can register new user", async () => {
 });
 
 test("it can login user", async () => {
-    let existingUser = await User.findOne({ email: "john@test.test" });
-    if (!existingUser) {
-        existingUser = await User({
-            firstname: "John",
-            lastname: "Doe",
-            email: "john@test.test",
-            password: "$2a$10$Qsu.gk.u76oq9Gx4uFq5F.b7JSsrx1/Vh8vROou/9ilZAnNoKniGW", // secret hashed
-        }).save();
-    }
-    console.log("existingUser", existingUser);
+    await User({
+        firstname: "John",
+        lastname: "Doe",
+        email: "john@test.test",
+        password: "$2a$10$Qsu.gk.u76oq9Gx4uFq5F.b7JSsrx1/Vh8vROou/9ilZAnNoKniGW", // secret hashed
+    }).save();
     const response = await request(app).post("/login").send({
         email: "john@test.test",
         password: "secret",
