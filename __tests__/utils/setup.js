@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 beforeAll(async () => {
     // put your client connection code here, example with mongoose:
     await mongoose.disconnect();
-    await mongoose.connect(process.env["MONGO_URI"]);
+    await mongoose.connect(process.env["DB_CONNECTION_STRING"]);
 });
 
 afterAll(async () => {

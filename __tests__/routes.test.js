@@ -1,15 +1,10 @@
 const request = require("supertest");
 const app = require("../app");
+const User = require("../models/users");
 // const mongoose = require("mongoose");
 
-// /* Connecting to the database before each test. */
-// beforeAll(async () => {
-//     await mongoose.connect(process.env["MONGO_URI"]);
-// });
-
-// /* Closing database connection after each test. */
-// afterAll(async () => {
-//     await mongoose.disconnect();
+// beforeEach(async () => {
+//     global.console = { log: jest.fn() };
 // });
 
 test("it can register new user", async () => {
@@ -23,6 +18,16 @@ test("it can register new user", async () => {
 });
 
 test("it can login user", async () => {
+    let existingUser = await User.findOne({ email: "john@test.test" });
+    if (!existingUser) {
+        existingUser = await User({
+            firstname: "John",
+            lastname: "Doe",
+            email: "john@test.test",
+            password: "$2a$10$Qsu.gk.u76oq9Gx4uFq5F.b7JSsrx1/Vh8vROou/9ilZAnNoKniGW", // secret hashed
+        }).save();
+    }
+    console.log("existingUser", existingUser);
     const response = await request(app).post("/login").send({
         email: "john@test.test",
         password: "secret",
@@ -54,4 +59,3 @@ test("it can return all depositions", async () => {
         expect(deposition.placeId).toHaveProperty("type");
     });
 });
-
