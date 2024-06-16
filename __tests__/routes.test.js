@@ -39,7 +39,6 @@ test("it can return all depositions", async () => {
     const response = await request(app).get("/depositions");
     expect(response.statusCode).toBe(200);
     expect(response.body.result).toBe(true);
-    console.log(response.body);
     response.body.depositions.map((deposition) => {
         expect(deposition).toHaveProperty("_id");
         expect(deposition).toHaveProperty("name");
@@ -47,7 +46,7 @@ test("it can return all depositions", async () => {
         expect(deposition).toHaveProperty("status");
         expect(deposition).toHaveProperty("type");
         expect(deposition).toHaveProperty("visualProofs");
-        // expect(deposition).toHaveProperty("placeOwnerEmail");
+        expect(deposition).toHaveProperty("placeOwnerEmail");
         expect(deposition).toHaveProperty("placeId");
         expect(deposition.placeId).toHaveProperty("_id");
         expect(deposition.placeId).toHaveProperty("address");
@@ -55,3 +54,4 @@ test("it can return all depositions", async () => {
         expect(deposition.placeId).toHaveProperty("type");
     });
 });
+
