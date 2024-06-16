@@ -19,7 +19,7 @@ const authenticateUser = require("./middleware/authenticateUser");
 
 const multer = require("multer");
 const Resolution = require("../models/resolutions");
-const upload = multer({ dest: "./tmp/" });
+const upload = multer({ dest: "/tmp" });
 const cloudinary = require("cloudinary").v2;
 
 // Create a transporter object
@@ -142,7 +142,7 @@ router.get("/", (req, res) => {
                     description: 'Get all depositions.',
                     schema: {
                         result: true,
-                        depositions: [{$ref: '#/definitions/User'}],
+                        depositions: [{$ref: '#/definitions/Depositions'}],
                     },
                 }
             */

@@ -64,7 +64,3 @@ typings/
 
 # misc files excluded from git
 modules/findOrCreatePlace.js
-
-
-# temporary files
-tmp/*

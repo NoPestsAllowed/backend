@@ -6,6 +6,7 @@ const doc = {
         description: "Backend endpoints for NoPestsAllowed",
     },
     host: "192.168.1.17:3000",
+    schemes: ["http", "https"],
     definitions: {
         User: {
             _id: "6659d91232ca8503efe37500",
