@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const geojsonSchema = new mongoose.Schema({
+const GeoJson = new mongoose.Schema({
     type: {
         type: String,
         enum: ["Point", "Polygon", "LineString", "MultiLineString", "MultiPolygon"],
@@ -19,8 +19,9 @@ const placeSchema = mongoose.Schema({
         unique: false,
     },
     geojson: {
-        type: geojsonSchema,
+        type: GeoJson,
         required: true,
+        index: true,
     },
     type: {
         type: String,
@@ -36,8 +37,16 @@ const placeSchema = mongoose.Schema({
         ref: "owners",
         required: false,
     },
+    uniqRef: {
+        type: String,
+        required: true,
+    },
 });
 
+placeSchema.index({ geojson: "2dsphere" });
 const Place = mongoose.model("places", placeSchema);
+// const GeoJson = mongoose.model("geojsons", geojsonSchema);
 
-module.exports = Place;
+// Place.index({ geojson: "2dsphere" });
+
+module.exports = { Place, GeoJson };

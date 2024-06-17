@@ -1,5 +1,7 @@
 # NoPestsAllowed : Say stop to bedbugs, flea, bettles...
 
+![example event parameter](https://github.com/NoPestsAllowed/backend/actions/workflows/jest.yml/badge.svg?event=push)
+
 ## Backend
 
 This Repository contain the backend powering NoPestsAllowed mobile and web applications.

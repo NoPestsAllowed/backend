@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const visualProofSchema = require("./visualProofs");
 
 const resolutionSchema = mongoose.Schema({
     // Foreign Keys
@@ -21,7 +22,12 @@ const resolutionSchema = mongoose.Schema({
     },
     status: {
         type: String,
-        // enum: ['pending', 'accepted', 'refused']
+        default: "pending",
+        enum: ["pending", "accepted", "refused"],
+    },
+    text: {
+        type: String,
+        required: false,
     },
 });
 
