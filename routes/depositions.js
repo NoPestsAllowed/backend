@@ -142,7 +142,7 @@ router.get("/", (req, res) => {
                     description: 'Get all depositions.',
                     schema: {
                         result: true,
-                        depositions: [{$ref: '#/definitions/Depositions'}],
+                        depositions: [{$ref: '#/definitions/Deposition'}],
                     },
                 }
             */
