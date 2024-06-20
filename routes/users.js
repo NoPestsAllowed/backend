@@ -36,7 +36,7 @@ router.put("/update/:id", authenticateUser, (req, res) => {
     }
 
     User.updateOne(
-        { _id: id },
+        { _id: id, email: req.user.email },
         {
             firstname: firstname,
             lastname: lastname,

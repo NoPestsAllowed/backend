@@ -281,7 +281,7 @@ router.get("/:id", (req, res) => {
         });
 });
 
-router.put("/update/:id", (req, res) => {
+router.put("/update/:id", authenticateUser, (req, res) => {
     if (!checkBody(req.body, ["description", "name"])) {
         res.json({ result: false, error: "Missing or empty fields" });
         return;
@@ -290,7 +290,7 @@ router.put("/update/:id", (req, res) => {
     const { name, description } = req.body;
 
     Deposition.updateOne(
-        { _id: id },
+        { _id: id, userId: req.user.id },
         {
             name: name,
             description: description,
