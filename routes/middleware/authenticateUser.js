@@ -1,7 +1,7 @@
-const jwt = require("jsonwebtoken");
-const { promisify } = require("node:util");
-const jwksClient = require("jwks-rsa");
-const User = require("../../models/users");
+import jwt from "jsonwebtoken";
+import { promisify } from "node:util";
+import jwksClient from "jwks-rsa";
+import User from "../../models/users.js";
 
 const authenticateUser = (req, res, next) => {
     const authHeader = req?.headers.authorization;
@@ -74,4 +74,4 @@ const authenticateUser = (req, res, next) => {
     // });
 };
 
-module.exports = authenticateUser;
+export default authenticateUser;

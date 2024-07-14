@@ -1,11 +1,11 @@
-var express = require("express");
-var router = express.Router();
-const User = require("../models/users");
-const bcrypt = require("bcryptjs");
-const authenticateUser = require("./middleware/authenticateUser");
-const Deposition = require("../models/depositions");
-const { generateAccessAndRefreshToken, clearTokens } = require("../modules/generateAccessAndRefreshToken");
-const { checkBody } = require("../modules/checkBody");
+import express from "express";
+const router = express.Router();
+import User from "../models/users.js";
+import bcrypt from "bcryptjs";
+import authenticateUser from "./middleware/authenticateUser.js";
+import Deposition from "../models/depositions.js";
+import { generateAccessAndRefreshToken, clearTokens } from "../modules/generateAccessAndRefreshToken.js";
+import { checkBody } from "../modules/checkBody.js";
 
 /* GET users listing. */
 router.get("/", function (req, res, next) {
@@ -124,4 +124,4 @@ router.get("/me", authenticateUser, (req, res) => {
     });
 });
 
-module.exports = router;
+export default router;

@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const pointSchema = new mongoose.Schema({
     type: {
@@ -49,4 +49,4 @@ const visualProofSchema = mongoose.Schema({
 
 // const VisualProof = mongoose.model("visualProofs", visualProofSchema);
 
-module.exports = visualProofSchema;
+export default visualProofSchema;

@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const propertySchema = mongoose.Schema({
     placeId: {
@@ -32,4 +32,4 @@ const ownerSchema = mongoose.Schema({
 
 const Owner = mongoose.model("owners", ownerSchema);
 
-module.exports = Owner;
+export default Owner;

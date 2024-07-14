@@ -1,27 +1,27 @@
-require("dotenv").config();
-require("./models/connection");
-
+import {} from "dotenv/config";
+import "./models/connection.js";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
 // Documentation
-const swaggerUi = require("swagger-ui-express");
+import swaggerUi from "swagger-ui-express";
 const swaggerFile = require("./swagger-output.json");
 
-const authenticateUser = require("./routes/middleware/authenticateUser");
+import authenticateUser from "./routes/middleware/authenticateUser.js";
 
-var express = require("express");
-var path = require("path");
-var cookieParser = require("cookie-parser");
-var logger = require("morgan");
+import path from "path";
+import express from "express";
+import cookieParser from "cookie-parser";
+import logger from "morgan";
 
-const bodyParser = require("body-parser");
+import bodyParser from "body-parser";
+import cors from "cors";
 
-var indexRouter = require("./routes/index");
-var usersRouter = require("./routes/users");
-var depositionsRouter = require("./routes/depositions");
-var mailRouter = require("./routes/mail");
+import indexRouter from "./routes/index.js";
+import usersRouter from "./routes/users.js";
+import depositionsRouter from "./routes/depositions.js";
+import mailRouter from "./routes/mail.js";
 
-var app = express();
-
-const cors = require("cors");
+const app = express();
 
 const corsOptions = {
     origin: function (origin, callback) {
@@ -50,7 +50,7 @@ app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser(process.env.ACCESS_TOKEN_SECRET));
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join("./", "public")));
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(
@@ -75,4 +75,4 @@ app.use("/mail", mailRouter);
 app.use("/users", usersRouter);
 app.use("/depositions", depositionsRouter);
 
-module.exports = app;
+export default app;

@@ -1,5 +1,5 @@
-const mongoose = require("mongoose");
-const visualProofSchema = require("./visualProofs");
+import mongoose from "mongoose";
+import visualProofSchema from "./visualProofs.js";
 
 const depositionSchema = mongoose.Schema({
     name: {
@@ -57,4 +57,4 @@ const depositionSchema = mongoose.Schema({
 
 const Deposition = mongoose.model("depositions", depositionSchema);
 
-module.exports = Deposition;
+export default Deposition;

@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const GeoJson = new mongoose.Schema({
     type: {
@@ -49,4 +49,4 @@ const Place = mongoose.model("places", placeSchema);
 
 // Place.index({ geojson: "2dsphere" });
 
-module.exports = { Place, GeoJson };
+export { Place, GeoJson };

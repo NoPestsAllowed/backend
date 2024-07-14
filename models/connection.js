@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 const connectionString = process.env.DB_CONNECTION_STRING;
 mongoose.set("strictQuery", true);
 

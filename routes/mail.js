@@ -1,16 +1,16 @@
-var express = require("express");
-var router = express.Router();
+import express from "express";
+const router = express.Router();
 // Import the Nodemailer library
-const nodemailer = require("nodemailer");
-const { SignedUrl } = require("../modules/generateSignedUrl");
+import nodemailer from "nodemailer";
+import { SignedUrl } from "../modules/generateSignedUrl.js";
 // import { Signature } from "../modules/generateSignedUrl";
 
-const fs = require("fs");
-const path = require("path");
-const handlebars = require("handlebars");
-const { checkBody } = require("../modules/checkBody");
+import fs from "fs";
+import path from "path";
+import handlebars from "handlebars";
+import { checkBody } from "../modules/checkBody.js";
 
-const templatePath = path.join(__dirname, "../templates/emails/messageSent.hbs");
+const templatePath = path.join("./", "./templates/emails/messageSent.hbs");
 const source = fs.readFileSync(templatePath, "utf8");
 const template = handlebars.compile(source);
 
@@ -126,4 +126,4 @@ router.post("/contact-us", (req, res) => {
     res.json({ result: true, message: "Email sent" });
 });
 
-module.exports = router;
+export default router;

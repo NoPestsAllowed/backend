@@ -1,26 +1,26 @@
-var express = require("express");
-var router = express.Router();
-const User = require("../models/users");
-const Deposition = require("../models/depositions");
+import express from "express";
+const router = express.Router();
+import User from "../models/users.js";
+import Deposition from "../models/depositions.js";
 //const Place = require('../models/place');
-const { Place } = require("../models/places");
-const { checkBody } = require("../modules/checkBody");
+import { Place } from "../models/places.js";
+import { checkBody } from "../modules/checkBody.js";
 // const { findOrCreatePlace } = await require("../modules/findOrCreatePlace");
-const nodemailer = require("nodemailer");
-const fs = require("fs");
-const path = require("path");
-const handlebars = require("handlebars");
-const templatePath = path.join(__dirname, "../templates/emails/depositionCreated.hbs");
+import nodemailer from "nodemailer";
+import fs from "fs";
+import path from "path";
+import handlebars from "handlebars";
+const templatePath = path.join("./", "./templates/emails/depositionCreated.hbs");
 const source = fs.readFileSync(templatePath, "utf8");
 const template = handlebars.compile(source);
 
-const { SignedUrl } = require("../modules/generateSignedUrl");
-const authenticateUser = require("./middleware/authenticateUser");
+import { SignedUrl } from "../modules/generateSignedUrl.js";
+import authenticateUser from "./middleware/authenticateUser.js";
 
-const multer = require("multer");
-const Resolution = require("../models/resolutions");
+import multer from "multer";
+import Resolution from "../models/resolutions.js";
 const upload = multer({ dest: "/tmp" });
-const cloudinary = require("cloudinary").v2;
+import { v2 as cloudinary } from "cloudinary";
 
 // Create a transporter object
 const transporter = nodemailer.createTransport({
@@ -472,4 +472,4 @@ const storePicturesInCloudinary = async (pictures) => {
     // console.log("result", result);
     return result;
 };
-module.exports = router;
+export default router;

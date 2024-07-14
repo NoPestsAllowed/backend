@@ -1,23 +1,23 @@
-var express = require("express");
-var router = express.Router();
+import express from "express";
+const router = express.Router();
 
-const jwt = require("jsonwebtoken");
-const bcrypt = require("bcryptjs");
+import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
 
-const User = require("../models/users");
-const RefreshToken = require("../models/refreshTokens");
-const {
+import User from "../models/users.js";
+import RefreshToken from "../models/refreshTokens.js";
+import {
     generateAccessAndRefreshToken,
     clearTokens,
     generateAccessToken,
-} = require("../modules/generateAccessAndRefreshToken");
-const authenticateUser = require("./middleware/authenticateUser");
-const nodemailer = require("nodemailer");
-const fs = require("fs");
-const path = require("path");
-const handlebars = require("handlebars");
-const { checkBody } = require("../modules/checkBody");
-const templatePath = path.join(__dirname, "../templates/emails/accountRegistered.hbs");
+} from "../modules/generateAccessAndRefreshToken.js";
+import authenticateUser from "./middleware/authenticateUser.js";
+import nodemailer from "nodemailer";
+import fs from "fs";
+import path from "path";
+import handlebars from "handlebars";
+import { checkBody } from "../modules/checkBody.js";
+const templatePath = path.join("./", "./templates/emails/accountRegistered.hbs");
 const source = fs.readFileSync(templatePath, "utf8");
 const template = handlebars.compile(source);
 
@@ -281,4 +281,4 @@ router.get("/refresh", async (req, res) => {
     // });
 });
 
-module.exports = router;
+export default router;

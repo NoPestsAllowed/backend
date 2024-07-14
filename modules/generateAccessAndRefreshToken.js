@@ -1,4 +1,4 @@
-const jwt = require("jsonwebtoken");
+import jwt from "jsonwebtoken";
 
 const generateAccessAndRefreshToken = (payload) => {
     const accessToken = generateAccessToken({ ...payload });
@@ -32,4 +32,4 @@ const clearTokens = async (req, res) => {
     });
 };
 
-module.exports = { generateAccessAndRefreshToken, generateAccessToken, clearTokens };
+export { generateAccessAndRefreshToken, generateAccessToken, clearTokens };

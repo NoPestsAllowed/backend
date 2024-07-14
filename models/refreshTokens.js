@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const refreshTokenSchema = mongoose.Schema({
     email: {
@@ -27,4 +27,4 @@ const refreshTokenSchema = mongoose.Schema({
 
 const refreshToken = mongoose.model("refreshTokens", refreshTokenSchema);
 
-module.exports = refreshToken;
+export default refreshToken;

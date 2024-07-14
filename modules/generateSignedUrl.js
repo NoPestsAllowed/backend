@@ -1,7 +1,7 @@
 // import { createHash } from "crypto";
-const { createHash } = require("crypto");
-const { querystring } = require("querystring");
-const { URLSearchParams } = require("url");
+import { createHash } from "crypto";
+import querystring from "querystring";
+import { URLSearchParams } from "url";
 
 class SignedUrl {
     secret = process.env.ACCESS_TOKEN_SECRET;
@@ -85,4 +85,4 @@ class SignedUrl {
     }
 }
 
-module.exports = { SignedUrl };
+export { SignedUrl };

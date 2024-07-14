@@ -1,5 +1,5 @@
-const mongoose = require("mongoose");
-const visualProofSchema = require("./visualProofs");
+import mongoose from "mongoose";
+import visualProofSchema from "./visualProofs.js";
 
 const resolutionSchema = mongoose.Schema({
     // Foreign Keys
@@ -33,4 +33,4 @@ const resolutionSchema = mongoose.Schema({
 
 const Resolution = mongoose.model("resolutions", resolutionSchema);
 
-module.exports = Resolution;
+export default Resolution;
