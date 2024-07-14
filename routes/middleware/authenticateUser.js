@@ -3,7 +3,7 @@ import { promisify } from "node:util";
 import jwksClient from "jwks-rsa";
 import User from "../../models/users.js";
 
-const authenticateUser = (req, res, next) => {
+const authenticateUser = async (req, res, next) => {
     const authHeader = req?.headers.authorization;
     const token = authHeader && authHeader.split(" ")[1];
     if (!token) {
@@ -27,40 +27,57 @@ const authenticateUser = (req, res, next) => {
         });
     };
 
-    const verify = async (token) => {
+    try {
+        console.log(token, jwt.decode(token));
         const { iss: issuer } = jwt.decode(token);
         console.log("issuer", issuer);
         const jwksUri = await fetchJwksUri(issuer);
-        console.log("jwksUri", jwksUri);
-        return promisify(jwt.verify)(token, getKey(jwksUri));
-    };
+        const authenticatedUser = await promisify(jwt.verify)(token, getKey(jwksUri));
+        console.log("authenticatedUser is : ", authenticatedUser);
+        req.user = authenticatedUser;
+        next();
+    } catch (error) {
+        console.error(error);
+        return res.sendStatus(403);
+    }
 
-    const decodeToken = async (token) => {
-        const { iss: issuer } = jwt.decode(token);
-        console.log("issuer", issuer);
-        const jwksUri = await fetchJwksUri(issuer);
-        console.log("jwksUri", jwksUri);
-        return promisify(jwt.decode)(token, getKey(jwksUri));
-    };
+    // const verify = async (token) => {
+    //     const { iss: issuer } = jwt.decode(token);
+    //     console.log("issuer", issuer);
+    //     const jwksUri = await fetchJwksUri(issuer);
+    //     console.log("jwksUri", jwksUri);
+    //     return promisify(jwt.verify)(token, getKey(jwksUri));
+    // };
 
-    const setUser = async (email) => {
-        const user = await User.findOne({ email: email });
-        req.user = user;
-        return user;
-    };
-    verify(token)
-        .then((user) => {
-            console.log("Token verified successfully.");
-            console.log(user);
-            // decodeToken(token).then((decodedToken) => console.log("decodedToken", decodedToken));
-            console.log("decoded token is ", jwt.decode(token, { complete: true }));
-            setUser(user.sub);
-            next();
-        })
-        .catch((err) => {
-            console.log("auth error", err);
-            return res.sendStatus(403);
-        });
+    // const decodeToken = async (token) => {
+    //     const { iss: issuer } = jwt.decode(token);
+    //     console.log("issuer", issuer);
+    //     const jwksUri = await fetchJwksUri(issuer);
+    //     console.log("jwksUri", jwksUri);
+    //     return promisify(jwt.decode)(token, getKey(jwksUri));
+    // };
+
+    // const setUser = async (sub) => {
+    //     console.log(sub);
+    //     const user = await User.findById(sub);
+    //     req.user = user;
+    //     // console.log(req.user);
+    //     // return user;
+    // };
+    // verify(token)
+    //     .then((user) => {
+    //         console.log("Token verified successfully.");
+    //         console.log(user);
+    //         // decodeToken(token).then((decodedToken) => console.log("decodedToken", decodedToken));
+    //         // console.log("decoded token is ", jwt.decode(token, { complete: true }));
+    //         await setUser(user.sub);
+    //         // console.log("here");
+    //         next();
+    //     })
+    //     .catch((err) => {
+    //         console.log("auth error", err);
+    //         return res.sendStatus(403);
+    //     });
 
     // return res.sendStatus(403);
     // jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, { algorithms: ["ES256"] }, (err, user) => {

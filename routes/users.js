@@ -101,6 +101,7 @@ router.get("/depositions", authenticateUser, (req, res) => {
                     },
                 }
             */
+            console.log({ result: true, depositions: data });
             res.json({ result: true, depositions: data });
         })
         .catch((err) => console.log(err));

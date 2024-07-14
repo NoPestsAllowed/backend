@@ -20,8 +20,29 @@ import indexRouter from "./routes/index.js";
 import usersRouter from "./routes/users.js";
 import depositionsRouter from "./routes/depositions.js";
 import mailRouter from "./routes/mail.js";
+import oidcRouter from "./routes/oidc.js";
 
 const app = express();
+
+app.set("views", path.join("./", "views"));
+app.set("view engine", "ejs");
+
+app.use((req, res, next) => {
+    const orig = res.render;
+    // you'll probably want to use a full blown render engine capable of layouts
+    res.render = (view, locals) => {
+        app.render(view, locals, (err, html) => {
+            if (err) throw err;
+            orig.call(res, "_layout", {
+                ...locals,
+                body: html,
+            });
+        });
+    };
+    next();
+});
+
+app.use("/oidc", oidcRouter);
 
 const corsOptions = {
     origin: function (origin, callback) {
@@ -34,6 +55,7 @@ const corsOptions = {
             "http://192.168.100.145:8081",
             `http://${process.env.FRONTEND_URL}`,
             `https://${process.env.FRONTEND_URL}`,
+            "com.anonymous.no-pests-allowed://",
         ];
         if (allowedOrigins.includes(origin) || !origin) {
             callback(null, true);

@@ -37,7 +37,7 @@ const transporter = nodemailer.createTransport({
 router.post("/create", [upload.array("visualProofs"), authenticateUser], async (req, res) => {
     if (!checkBody(req.body, ["name", "description", "placeOwnerEmail", "depo", "pestType"])) {
         console.log("missing fields");
-        return res.json({ result: false, error: "Missing or empty fields" });
+        return res.status(422).json({ result: false, error: "Missing or empty fields" });
     }
 
     const jsonPlace = JSON.parse(req.body.depo).place;
