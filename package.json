@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "node ./bin/www",
+    "start": "nodemon ./bin/www",
     "test": "jest --testTimeout=5000 --detectOpenHandles",
     "swagger": "node ./swagger.js"
   },
@@ -20,11 +20,13 @@
     "express": "^4.16.1",
     "handlebars": "^4.7.8",
     "jsonwebtoken": "^9.0.2",
+    "jwks-rsa": "^3.1.0",
     "mongoose": "^8.4.0",
     "morgan": "^1.9.1",
     "multer": "^1.4.5-lts.1",
     "node-fetch": "^2",
     "nodemailer": "^6.9.13",
+    "nodemon": "^3.1.4",
     "swagger-ui-express": "^5.0.1"
   },
   "packageManager": "yarn@1.22.19+sha1.4ba7fc5c6e704fce2066ecbfb0b0d8976fe62447",
