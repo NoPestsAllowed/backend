@@ -17,7 +17,7 @@ const authenticateUser = async (req, res, next) => {
     };
 
     const getKey = (jwksUri) => (header, callback) => {
-        console.log("jwksUri in getKey", jwksUri);
+        // console.log("jwksUri in getKey", jwksUri);
         const client = jwksClient({ jwksUri });
         client.getSigningKey(header.kid, (err, key) => {
             if (err) {
@@ -33,7 +33,7 @@ const authenticateUser = async (req, res, next) => {
         console.log("issuer", issuer);
         const jwksUri = await fetchJwksUri(issuer);
         const authenticatedUser = await promisify(jwt.verify)(token, getKey(jwksUri));
-        console.log("authenticatedUser is : ", authenticatedUser);
+        // console.log("authenticatedUser is : ", authenticatedUser);
         req.user = authenticatedUser;
         next();
     } catch (error) {

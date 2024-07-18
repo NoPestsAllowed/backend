@@ -40,9 +40,11 @@ router.post("/create", [upload.array("visualProofs"), authenticateUser], async (
         return res.status(422).json({ result: false, error: "Missing or empty fields" });
     }
 
-    const jsonPlace = JSON.parse(req.body.depo).place;
+    // console.log("req.body in create", req.body);
 
-    const user = await User.findOne({ email: req.user.email });
+    const jsonPlace = JSON.parse(req.body.depo).place.data;
+    console.log("jsonPlace is ", jsonPlace);
+    const user = await User.findById(req.user.sub);
 
     if (user === null) {
         return res.json({ result: false, error: "User not found" });
@@ -200,8 +202,8 @@ router.delete("/delete", authenticateUser, (req, res) => {
         res.json({ result: false, error: "Missing or empty fields" });
         return;
     }
-
-    User.findOne({ email: req.user.email }).then((user) => {
+    // console.log(req.user);
+    User.findById(req.user.sub).then((user) => {
         if (user === null) {
             return res.status(500).json({ result: false, error: "User not found" });
         }
@@ -277,7 +279,7 @@ router.get("/:id", (req, res) => {
                 */
                 return res.json({ result: true, deposition });
             }
-            return res.statusCode(404).json({ result: false, message: "deposition not found" });
+            return res.status(404).json({ result: false, message: "deposition not found" });
         });
 });
 
@@ -373,6 +375,7 @@ const formatPlaceAddress = (placeObject) => {
     if (placeObject.street) {
         return `${placeObject.tags["addr:housenumber"]} ${placeObject.street}`;
     } else if (
+        placeObject.tags &&
         placeObject.tags["amenity"] &&
         (placeObject.tags["addr:housenumber"] || placeObject.tags["contact:housenumber"]) &&
         (placeObject.tags["addr:street"] || placeObject.tags["contact:street"])

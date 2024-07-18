@@ -22,21 +22,21 @@ router.get("/", function (req, res, next) {
     });
 });
 
-router.put("/update/:id", authenticateUser, (req, res) => {
-    const id = req.params.id;
+router.put("/update", authenticateUser, (req, res) => {
+    const id = req.user.sub;
     if (!checkBody(req.body, ["firstname", "lastname"])) {
         console.log("missing fields");
         return res.json({ result: false, error: "Missing or empty fields" });
     }
     const { firstname, lastname, dateOfBirth, password, avatarUrl } = req.body;
-
+    console.log(firstname, lastname, dateOfBirth, password, avatarUrl);
     let hashedPassword;
     if (password) {
         hashedPassword = bcrypt.hashSync(password, 10);
     }
 
     User.updateOne(
-        { _id: id, email: req.user.email },
+        { _id: id },
         {
             firstname: firstname,
             lastname: lastname,
@@ -62,23 +62,23 @@ router.put("/update/:id", authenticateUser, (req, res) => {
     });
 });
 
-router.delete("/delete/:id", authenticateUser, (req, res) => {
-    const id = req.params.id;
-    if (!checkBody(req.params, ["id"])) {
+router.delete("/delete", authenticateUser, (req, res) => {
+    if (!checkBody(req.user, ["sub"])) {
         return res.json({ result: false, error: "Missing user id" });
     }
-    User.deleteOne({ _id: id }).then((deletedDoc) => {
+
+    User.deleteOne({ _id: req.user.sub }).then((deletedDoc) => {
         if (deletedDoc.deletedCount > 0) {
             /*
                     #swagger.responses[200] = {
                         description: 'Delete current user\'s account',
                         schema: {
                             result: true,
-                            message: "Votre compte a bien été supprimé",
+                            data: "Account [id] succesfully deleted!",
                         },
                     }
                 */
-            res.status(200).json({ message: "Votre compte a bien été supprimé" });
+            res.status(200).json({ result: true, data: `Account ${req.user.sub} succesfully deleted!` });
         } else {
             res.status(400).json({ result: false, error: "Ce compte n'existe pas" });
         }
@@ -86,11 +86,12 @@ router.delete("/delete/:id", authenticateUser, (req, res) => {
 });
 
 router.get("/depositions", authenticateUser, (req, res) => {
-    const { id } = req.user;
+    const { sub: id } = req.user;
     Deposition.find({ userId: id })
         .populate("placeId")
         .sort({ createdAt: -1 })
         .limit(10)
+        .exec()
         .then((data) => {
             /*
                 #swagger.responses[200] = {
@@ -101,14 +102,14 @@ router.get("/depositions", authenticateUser, (req, res) => {
                     },
                 }
             */
-            console.log({ result: true, depositions: data });
+            console.log({ result: true, depositions: data[0] });
             res.json({ result: true, depositions: data });
         })
         .catch((err) => console.log(err));
 });
 
 router.get("/me", authenticateUser, (req, res) => {
-    User.findById(req.user.id).then((user) => {
+    User.findById(req.user.sub).then((user) => {
         if (user) {
             /*
                 #swagger.responses[200] = {

@@ -1,4 +1,5 @@
 import { BaseModel } from "../../models/BaseModel.js";
+import User from "../../models/users.js";
 
 export class MongooseAdapter {
     model;
@@ -34,7 +35,14 @@ export class MongooseAdapter {
                 key: id,
                 "payload.kind": this.model,
             });
-            console.debug(doc);
+            console.debug("debuging baseModel retrieved", doc);
+            if (doc?.payload && doc?.payload.kind === "Session") {
+                const userExist = await User.findById(doc.payload.accountId);
+                console.debug("userExist", userExist !== null);
+                if (!userExist) {
+                    return null;
+                }
+            }
             return doc?.payload || null;
         } catch (error) {
             console.error("Error in find:", error);

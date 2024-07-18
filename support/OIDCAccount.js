@@ -88,7 +88,7 @@ export default class OIDCAccount {
         const account = await User.findOne({ email: login });
         if (!account) {
             console.log(`no Account found for login: ${login}`);
-            return new OIDCAccount(login);
+            return null;
         }
         return new OIDCAccount(account);
     }
@@ -98,11 +98,11 @@ export default class OIDCAccount {
         // token is a reference to the token used for which a given account is being loaded,
         //   it is undefined in scenarios where account claims are returned from authorization endpoint
         // ctx is the koa request context
-        console.log("FINDING ACCOUNT", id, token);
+        console.log("FINDING ACCOUNT", ctx, id, token);
         try {
             const account = await User.findById(id);
-            console.log("account found", account);
-            // if (!account) new OIDCAccount(id); // eslint-disable-line no-new
+            console.log("account found", account, id);
+            // if (account === null) new OIDCAccount(id); // eslint-disable-line no-new
             return new OIDCAccount(account);
         } catch (error) {
             console.error("ISSET AN ERROR FINDING ACCOUNT", error);

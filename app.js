@@ -21,6 +21,7 @@ import usersRouter from "./routes/users.js";
 import depositionsRouter from "./routes/depositions.js";
 import mailRouter from "./routes/mail.js";
 import oidcRouter from "./routes/oidc.js";
+import geocoderRouter from "./routes/geocoder.js";
 
 const app = express();
 
@@ -92,6 +93,7 @@ app.use(
 );
 
 app.use("/", indexRouter);
+app.use("/geocoder", geocoderRouter);
 app.use("/mail", mailRouter);
 // app.use(authenticateUser);
 app.use("/users", usersRouter);
