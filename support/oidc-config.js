@@ -120,7 +120,7 @@ export default {
             client_id: "oidc_client",
             client_secret: "maSuperPhrasePourHasher",
             grant_types: ["refresh_token", "authorization_code"],
-            redirect_uris: ["com.anonymous.no-pests-allowed://"],
+            redirect_uris: ["com.anonymous.nopestsallowed://"],
             token_endpoint_auth_method: "none",
         },
     ],
