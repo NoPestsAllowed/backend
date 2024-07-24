@@ -92,7 +92,7 @@ router.post("/create", [upload.array("visualProofs"), authenticateUser], async (
                 const proofAnalysis = analysisResult.find((result) => result.related_to === cloudinaryFile.public_id)[
                     "result"
                 ];
-                // console.log("proofAnalysis", proofAnalysis);
+                console.log("proofAnalysis", proofAnalysis);
                 return proofAnalysis;
             };
             // console.log("fghjk", analysisRes());
