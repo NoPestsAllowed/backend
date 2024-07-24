@@ -25,7 +25,7 @@ import geocoderRouter from "./routes/geocoder.js";
 
 const app = express();
 
-app.set("views", path.join("./", "views"));
+app.set("views", path.join(process.cwd(), "views"));
 app.set("view engine", "ejs");
 
 app.use((req, res, next) => {
@@ -73,7 +73,7 @@ app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser(process.env.ACCESS_TOKEN_SECRET));
-app.use(express.static(path.join("./", "public")));
+app.use(express.static(path.join(process.cwd(), "public")));
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(

@@ -28,9 +28,9 @@ const authenticateUser = async (req, res, next) => {
     };
 
     try {
-        console.log(token, jwt.decode(token));
+        // console.log(token, jwt.decode(token));
         const { iss: issuer } = jwt.decode(token);
-        console.log("issuer", issuer);
+        // console.log("issuer", issuer);
         const jwksUri = await fetchJwksUri(issuer);
         const authenticatedUser = await promisify(jwt.verify)(token, getKey(jwksUri));
         // console.log("authenticatedUser is : ", authenticatedUser);

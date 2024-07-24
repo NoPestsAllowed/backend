@@ -67,7 +67,7 @@ export default {
         devInteractions: { enabled: false },
         resourceIndicators: {
             defaultResource: (ctx, client, oneOf) => {
-                return "http://nopestsallowed.com";
+                return process.env.APP_HOST;
             },
             enabled: true,
             getResourceServerInfo: (ctx, resourceIndicator, client) => {

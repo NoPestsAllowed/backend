@@ -10,7 +10,7 @@ import nodemailer from "nodemailer";
 import fs from "fs";
 import path from "path";
 import handlebars from "handlebars";
-const templatePath = path.join("./", "./templates/emails/depositionCreated.hbs");
+const templatePath = path.join(process.cwd(), "./templates/emails/depositionCreated.hbs");
 const source = fs.readFileSync(templatePath, "utf8");
 const template = handlebars.compile(source);
 
@@ -43,7 +43,7 @@ router.post("/create", [upload.array("visualProofs"), authenticateUser], async (
     // console.log("req.body in create", req.body);
 
     const jsonPlace = JSON.parse(req.body.depo).place.data;
-    console.log("jsonPlace is ", jsonPlace);
+    // console.log("jsonPlace is ", jsonPlace);
     const user = await User.findById(req.user.sub);
 
     if (user === null) {
@@ -55,9 +55,27 @@ router.post("/create", [upload.array("visualProofs"), authenticateUser], async (
         : [jsonPlace.lat, jsonPlace.lon];
 
     const place = await findOrCreatePlace(jsonPlace.id, formatPlaceAddress(jsonPlace), placeLat, placeLon);
+    const { visualProofsMeta } = req.body;
+    const parsedProofsDetail = Array.isArray(visualProofsMeta)
+        ? visualProofsMeta.map((proof) => JSON.parse(proof))
+        : [JSON.parse(visualProofsMeta)];
+    // console.log("files : ", req.files);
 
     const visualProofs = await storePicturesInCloudinary(req.files);
+    // console.log(visualProofs, parsedProofsDetail);
+    // We must analyse pictures before sending to cloudinary
+    let analysisResult = await Promise.all(
+        visualProofs.map(async (proof) => {
+            let responseResult = [];
+            let result = await (await import("../modules/imageAnalizer.mjs")).analyzeImg(proof.secure_url);
+            responseResult["result"] = result;
+            responseResult["related_to"] = proof.public_id;
 
+            return responseResult;
+        })
+    );
+    // console.log("analysisResultT", analysisResultT);
+    // return res.end();
     const newDeposition = new Deposition({
         name: req.body.name,
         description: req.body.description,
@@ -66,35 +84,52 @@ router.post("/create", [upload.array("visualProofs"), authenticateUser], async (
         type: req.body.pestType,
         placeOwnerEmail: req.body.placeOwnerEmail,
         visualProofs: visualProofs.map((cloudinaryFile) => {
+            const proofCoords = parsedProofsDetail.find(
+                (detail) => detail.name.split(".")[0] === cloudinaryFile.public_id
+            );
+            // console.log(cloudinaryFile.public_id, proofCoords, parsedProofsDetail);
+            const analysisRes = () => {
+                const proofAnalysis = analysisResult.find((result) => result.related_to === cloudinaryFile.public_id)[
+                    "result"
+                ];
+                // console.log("proofAnalysis", proofAnalysis);
+                return proofAnalysis;
+            };
+            // console.log("fghjk", analysisRes());
             return {
                 url: cloudinaryFile.secure_url,
-                longitude: placeLon,
-                latitude: placeLat,
-                // altitude: jsonPlace.alt,
+                longitude: proofCoords.coords.longitude,
+                latitude: proofCoords.coords.latitude,
+                altitude: proofCoords.coords?.altitude,
                 location: {
                     type: "Point",
-                    coordinates: [placeLat, placeLon],
+                    coordinates: [proofCoords.coords.latitude, proofCoords.coords.longitude],
                 },
                 takenAt: new Date(),
+                verificationRapport: analysisRes(),
             };
         }),
     });
 
     // We must analyse pictures before sending to cloudinary
-    let analysisResult = await Promise.all(
-        await visualProofs.map(async (proof) => {
-            let result = await (await import("../modules/imageAnalizer.mjs")).analyzeImg(proof.secure_url);
-            return result;
-        })
-    );
-    analysisResult = analysisResult.filter((item) => typeof item !== "undefined" && item.length > 0);
-
+    // let analysisResult = await Promise.all(
+    //     visualProofs.map(async (proof) => {
+    //         let result = await (await import("../modules/imageAnalizer.mjs")).analyzeImg(proof.secure_url);
+    //         console.log(result);
+    //         return result;
+    //     })
+    // );
+    // console.log("analysisResult", analysisResult);
+    analysisResult = analysisResult
+        .map((result) => result["result"])
+        .filter((item) => typeof item !== "undefined" && item.length > 0);
+    // console.log("analysisResult", analysisResult);
     if (analysisResult.length > 0) {
         let scoresSum = analysisResult.reduce((accumulator, currentValue) => {
-            console.log(currentValue);
+            // console.log("currentValue", currentValue);
             const { score } = currentValue[0];
-            console.log("score", score);
-            console.log("accumulator", accumulator);
+            // console.log("score", score);
+            // console.log("accumulator", accumulator);
 
             return accumulator + score;
         }, 0);
@@ -111,7 +146,7 @@ router.post("/create", [upload.array("visualProofs"), authenticateUser], async (
     }
 
     const deposition = await newDeposition.save();
-    console.log(deposition);
+    // console.log(deposition);
     const signedUrl = new SignedUrl();
     const url = signedUrl.sign(`${req.protocol}://${process.env.FRONTEND_URL}/resolution/${deposition._id}`, {
         ttl: 60 * 60 * 24,
@@ -179,7 +214,7 @@ router.post("/by-location", (req, res) => {
         return;
     }
     const { coords } = req.body;
-    console.log(coords, coords.longitude, coords.latitude);
+    // console.log(coords, coords.longitude, coords.latitude);
     Place.find({
         geojson: {
             $near: {
@@ -207,7 +242,8 @@ router.delete("/delete", authenticateUser, (req, res) => {
         if (user === null) {
             return res.status(500).json({ result: false, error: "User not found" });
         }
-
+        // console.log("req.body in delete", req.body);
+        // console.log("found user in delete", user);
         Deposition.findById(req.body.depositionId)
             .populate("userId")
             .populate("placeId")
@@ -221,8 +257,9 @@ router.delete("/delete", authenticateUser, (req, res) => {
                     return;
                 }
 
-                Deposition.deleteOne({ _id: deposition._id }).then(() => {
-                    /*
+                Deposition.deleteOne({ _id: deposition._id })
+                    .then(() => {
+                        /*
                         #swagger.responses[200] = {
                             description: 'Delete a deposition.',
                             schema: {
@@ -230,8 +267,12 @@ router.delete("/delete", authenticateUser, (req, res) => {
                             },
                         }
                     */
-                    res.json({ result: true });
-                });
+                        return res.json({ result: true });
+                    })
+                    .catch((err) => {
+                        console.log(err);
+                        return res.json({ result: false });
+                    });
             });
     });
 });
@@ -468,9 +509,20 @@ const sendMailForDeposition = (deposition, location, url) => {
 };
 
 const storePicturesInCloudinary = async (pictures) => {
-    // console.log("p", pictures);
+    // console.log(
+    //     "p",
+    //     pictures.map((picture) => picture.originalname.split(".")[0])
+    // );
     const result = await Promise.all(
-        pictures.map((picture) => cloudinary.uploader.upload(picture.path, { resource_type: "auto" }))
+        pictures.map((picture) =>
+            cloudinary.uploader.upload(picture.path, {
+                resource_type: "auto",
+                // use_filename: true,
+                // unique_filename: false,
+                public_id: picture.originalname.split(".")[0],
+                // metadata: `original_picture_name=${picture.originalname.split(".")[0]}`,
+            })
+        )
     );
     // console.log("result", result);
     return result;

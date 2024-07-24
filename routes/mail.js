@@ -10,7 +10,7 @@ import path from "path";
 import handlebars from "handlebars";
 import { checkBody } from "../modules/checkBody.js";
 
-const templatePath = path.join("./", "./templates/emails/messageSent.hbs");
+const templatePath = path.join(process.cwd(), "./templates/emails/messageSent.hbs");
 const source = fs.readFileSync(templatePath, "utf8");
 const template = handlebars.compile(source);
 

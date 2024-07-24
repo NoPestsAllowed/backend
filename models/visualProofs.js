@@ -12,6 +12,17 @@ const pointSchema = new mongoose.Schema({
     },
 });
 
+const analysisSchema = new mongoose.Schema({
+    score: {
+        type: Number,
+        required: true,
+    },
+    label: {
+        type: String,
+        required: true,
+    },
+});
+
 const visualProofSchema = mongoose.Schema({
     url: {
         type: String,
@@ -38,8 +49,8 @@ const visualProofSchema = mongoose.Schema({
         required: true,
     },
     verificationRapport: {
-        type: String,
-        required: false,
+        type: [analysisSchema],
+        required: true,
     },
     verificationResult: {
         type: Boolean,

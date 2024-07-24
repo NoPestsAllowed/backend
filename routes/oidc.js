@@ -11,7 +11,8 @@ import { checkBody } from "../modules/checkBody.js";
 import User from "../models/users.js";
 
 oauthConfig.findAccount = OIDCAccount.findAccount;
-const oidcProvider = new Provider("http://192.168.1.17:3000", oauthConfig);
+const oidcProvider = new Provider(process.env.APP_HOST, oauthConfig);
+oidcProvider.proxy = true;
 
 const setNoCache = (req, res, next) => {
     res.set("Pragma", "no-cache");
