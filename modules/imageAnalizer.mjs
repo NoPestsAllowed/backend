@@ -43,11 +43,11 @@ const imgContainPest = (classified, pestName) => {
             console.log('elmentArray', elementArray, 'out', out);
             elementArray.map(element => {
                 console.log(element, element.replace(" ", ""), translation[element.replace(" ", ""), regex]);
+                // We are temporary removing validation based on selected pests type for debu purpose.
                 if (translation[element.replace(" ", "")] && translation[element.replace(" ", "")].match(regex)) {
                     match.push({
                         score: out.score,
                         label: out.label,
-                        // regex: new RegExp(`^${elm}$`, "ig"),
                     });
                 }
             })
@@ -91,5 +91,5 @@ const imgContainPest = (classified, pestName) => {
 export const analyzeImg = async (url, pestName) => {
     let classified = await classify(url);
     console.log('analyzed',classified);
-    return imgContainPest(classified, pestName);
+    return {classification: classified, match: imgContainPest(classified, pestName)};
 };

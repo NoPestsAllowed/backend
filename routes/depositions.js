@@ -67,11 +67,14 @@ router.post("/create", [upload.array("visualProofs"), authenticateUser], async (
     let analysisResult = await Promise.all(
         visualProofs.map(async (proof) => {
             let responseResult = [];
-            let result = await (await import("../modules/imageAnalizer.mjs")).analyzeImg(proof.secure_url);
+            let { classification, match: result } = await (
+                await import("../modules/imageAnalizer.mjs")
+            ).analyzeImg(proof.secure_url);
+
             responseResult["result"] = result;
             responseResult["related_to"] = proof.public_id;
 
-            return responseResult;
+            return { classification, responseResult };
         })
     );
     // console.log("analysisResultT", analysisResultT);
@@ -89,11 +92,13 @@ router.post("/create", [upload.array("visualProofs"), authenticateUser], async (
             );
             // console.log(cloudinaryFile.public_id, proofCoords, parsedProofsDetail);
             const analysisRes = () => {
-                const proofAnalysis = analysisResult.find((result) => result.related_to === cloudinaryFile.public_id)[
-                    "result"
-                ];
+                console.log("aaaaa", analysisResult);
+                const proofAnalysis = analysisResult.find((result) => {
+                    console.log("hereeeeeee", result);
+                    return result.responseResult.related_to === cloudinaryFile.public_id;
+                });
                 console.log("proofAnalysis", proofAnalysis);
-                return proofAnalysis;
+                return proofAnalysis.classification;
             };
             // console.log("fghjk", analysisRes());
             return {
@@ -119,13 +124,16 @@ router.post("/create", [upload.array("visualProofs"), authenticateUser], async (
     //         return result;
     //     })
     // );
-    // console.log("analysisResult", analysisResult);
-    analysisResult = analysisResult
-        .map((result) => result["result"])
+    console.log("analysisResult", analysisResult);
+    const foundAnalysis = analysisResult
+        .map((result) => {
+            console.log("hhhhh", result.responseResult);
+            return result.responseResult["result"];
+        })
         .filter((item) => typeof item !== "undefined" && item.length > 0);
     // console.log("analysisResult", analysisResult);
-    if (analysisResult.length > 0) {
-        let scoresSum = analysisResult.reduce((accumulator, currentValue) => {
+    if (foundAnalysis.length > 0) {
+        let scoresSum = foundAnalysis.reduce((accumulator, currentValue) => {
             // console.log("currentValue", currentValue);
             const { score } = currentValue[0];
             // console.log("score", score);
@@ -134,7 +142,7 @@ router.post("/create", [upload.array("visualProofs"), authenticateUser], async (
             return accumulator + score;
         }, 0);
 
-        let scoreAvg = scoresSum / analysisResult.length;
+        let scoreAvg = scoresSum / foundAnalysis.length;
 
         if (scoreAvg > 0.8) {
             newDeposition.status = "accepted";
