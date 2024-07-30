@@ -1,10 +1,9 @@
-<div class="login-client-image">
+<!-- <div class="login-client-image">
     <% if (client.logoUri) { %><img src="<%= client.logoUri %>"><% } %>
-  </div>
-
+  </div> -->
   <ul>
   <% if ([details.missingOIDCScope, details.missingOIDCClaims, details.missingResourceScopes, details.rar].filter(Boolean).length === 0) { %>
-    <li>the client is asking you to confirm previously given authorization</li>
+    <li><%= client.clientName %> is asking you to confirm previously given authorization</li>
   <% } %>
 
   <% missingOIDCScope = new Set(details.missingOIDCScope); missingOIDCScope.delete('openid'); missingOIDCScope.delete('offline_access') %>

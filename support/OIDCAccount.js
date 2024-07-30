@@ -1,5 +1,6 @@
 // import { Account } from "../models/Account.js";
 
+import bcrypt from "bcryptjs";
 import User from "../models/users.js";
 
 export default class OIDCAccount {
@@ -83,13 +84,17 @@ export default class OIDCAccount {
         return logins.get(id);
     }
 
-    static async findByLogin(login) {
-        console.log("FINDING ACCOUNT BY LOGIN", login);
-        const account = await User.findOne({ email: login });
-        if (!account) {
-            console.log(`no Account found for login: ${login}`);
+    static async findByLogin(login, password) {
+        // console.log("FINDING ACCOUNT BY LOGIN", login, password);
+        const account = await User.findOne({ email: login }).select("password");
+        // console.log("the account", account);
+        if (!account || !bcrypt.compareSync(password, account.password)) {
             return null;
         }
+        // if (!account) {
+        //     console.log(`no Account found for login: ${login}`);
+        //     return null;
+        // }
         return new OIDCAccount(account);
     }
 
@@ -106,6 +111,7 @@ export default class OIDCAccount {
             return new OIDCAccount(account);
         } catch (error) {
             console.error("ISSET AN ERROR FINDING ACCOUNT", error);
+            return null;
         }
     }
 }

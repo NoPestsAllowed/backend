@@ -9,6 +9,7 @@ import oauthConfig from "../support/oidc-config.js";
 import OIDCAccount from "../support/OIDCAccount.js";
 import { checkBody } from "../modules/checkBody.js";
 import User from "../models/users.js";
+import bcrypt from "bcryptjs";
 
 oauthConfig.findAccount = OIDCAccount.findAccount;
 const oidcProvider = new Provider(process.env.APP_HOST, oauthConfig);
@@ -83,6 +84,7 @@ router.get("/interaction/:uid", setNoCache, async (req, res, next) => {
                 });
             }
             case "consent": {
+                // console.log("details : ", prompt.details);
                 return res.render("interaction", {
                     client,
                     uid,
@@ -114,6 +116,7 @@ router.post("/interaction/:uid/confirm", setNoCache, parse, async (req, res, nex
             session: { accountId },
         } = interactionDetails;
         // assert.equal(name, "consent");
+        // console.log("interactionDetails : ", JSON.stringify(interactionDetails, null, 2));
         if (name !== "consent") {
             // console.log("name !== consent");
             throw new Error("name is not consent");
@@ -136,15 +139,15 @@ router.post("/interaction/:uid/confirm", setNoCache, parse, async (req, res, nex
         }
 
         if (details.missingOIDCScope) {
-            console.log("details.missingOIDCScope", details.missingOIDCScope);
+            // console.log("details.missingOIDCScope", details.missingOIDCScope);
             grant.addOIDCScope(details.missingOIDCScope.join(" "));
         }
         if (details.missingOIDCClaims) {
-            console.log("details.missingOIDCClaims", details.missingOIDCClaims);
+            // console.log("details.missingOIDCClaims", details.missingOIDCClaims);
             grant.addOIDCClaims(details.missingOIDCClaims);
         }
         if (details.missingResourceScopes) {
-            console.log("details.missingResourceScopes", details.missingResourceScopes);
+            // console.log("details.missingResourceScopes", details.missingResourceScopes);
             for (const [indicator, scopes] of Object.entries(details.missingResourceScopes)) {
                 grant.addResourceScope(indicator, scopes.join(" "));
             }
@@ -186,7 +189,8 @@ router.post("/interaction/:uid/login", setNoCache, parse, async (req, res, next)
             throw new Error("prompt.name is not login");
         }
         //   const account = await Account.findByLogin(req.body.login);
-        const account = await OIDCAccount.findByLogin(req.body.login);
+        // console.log("the body", req.body);
+        const account = await OIDCAccount.findByLogin(req.body.login, req.body.password);
         if (!account) {
             throw new Error("Account not found");
         }
@@ -256,7 +260,7 @@ router.post("/interaction/:uid/reg", setNoCache, parse, async (req, res, next) =
             email,
             firstname: firstName,
             lastname: lastName,
-            password,
+            password: bcrypt.hashSync(password, 10),
         });
         const oidcAccount = new OIDCAccount(newUser);
         //   console.log("BEFORE ACCOUNT CREATION");
@@ -273,14 +277,23 @@ router.post("/interaction/:uid/reg", setNoCache, parse, async (req, res, next) =
         });
     } catch (err) {
         console.error("ACCOUNT CREATION ERROR ", err);
-        //   const result = {
-        //     error: "access_denied",
-        //     error_description: "Account creation error",
-        //   };
-        //   await oidcProvider.interactionFinished(req, res, result, {
-        //     mergeWithLastSubmission: false,
-        //   });
-        next(err);
+        console.log(JSON.stringify(err, null, 2));
+        let result = {
+            error: "access_denied",
+            error_description: "Account creation error",
+        };
+
+        if (err.name === "ValidationError") {
+            result = {
+                error: "access_denied",
+                error_description: err.message,
+            };
+        }
+
+        await oidcProvider.interactionFinished(req, res, result, {
+            mergeWithLastSubmission: false,
+        });
+        // next(err);
     }
 });
 

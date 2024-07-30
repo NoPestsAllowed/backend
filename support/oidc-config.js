@@ -122,8 +122,13 @@ export default {
             grant_types: ["refresh_token", "authorization_code"],
             redirect_uris: ["com.anonymous.nopestsallowed://"],
             token_endpoint_auth_method: "none",
+            logoUri: "/images/icon.png",
+            clientName: "NoPestsAllowed",
         },
     ],
+    extraClientMetadata: {
+        properties: ["logoUri", "clientName"],
+    },
     issueRefreshToken: async (ctx, client, code) => {
         // return true;
         return (

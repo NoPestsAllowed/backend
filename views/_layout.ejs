@@ -187,15 +187,53 @@
       button {
         cursor: pointer;
       }
+
+      .login-client-image {
+        margin-top: 15px;
+        img {
+            min-height: 105px;
+            min-width: 105px;
+        }
+      }
+
+      .login-client-name {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .client-name {
+        padding: 0;
+        margin: 0;
+      }
+      .login-link {
+        display: flex;
+        justify-content: space-between;
+        margin: 1rem 5px;
+      }
     </style>
   </head>
   <body>
     <div class="login-card">
-      <h1>My fcking <%= title %></h1>
+        <div class="login-client-image">
+            <% if (client.logoUri) { %><img src="<%= client.logoUri %>"><% } %>
+          </div>
+          <div class="login-client-name">
+            <% if (client.clientName) { %> <h2 class="client-name"><%= client.clientName %></h2> <%} %>
+          </div>
+      <h1><%= title %></h1>
       <%- body %>
-      <div>
-        Not registred ? <a href="/oidc/interaction/<%= uid %>/create" rel="create account">Create account</a>
-      </div>
+      <% if(title === "Sign-in") { %>
+        <div class="login-link">
+            <span>No account ?</span> <a href="/oidc/interaction/<%= uid %>/create" rel="create account">Create an account</a>
+        </div>
+      <% }
+      if (title === "Create new Account") { %>
+        <div class="login-link">
+            <span>Already an account</span> <a href="/oidc/interaction/<%= uid %>" rel="login">Log in</a>
+        </div>
+      <% } %>
+      %>
       <div class="login-help">
         <a href="/oidc/interaction/<%= uid %>/abort">[ Cancel ]</a>
         <% if (client.tosUri) { %>
@@ -206,33 +244,35 @@
         <% } %>
       </div>
     </div>
-    <div class="grant-debug">
-      <details>
-        <summary style="text-align: center;">(Click to expand) DEBUG information</summary>
-        <div>
-          <strong>uid</strong>: <%= uid %>
-        </div>
+    <% if(process.env.APP_ENV === "local" || process.env.APP_ENV === "debug") { %>
+        <div class="grant-debug">
+        <details>
+            <summary style="text-align: center;">(Click to expand) DEBUG information</summary>
+            <div>
+            <strong>uid</strong>: <%= uid %>
+            </div>
 
-        <% if (session) { %>
-        <div>
-          SESSION <br>
-         ========= <br>
-          <%- session %>
-        </div>
-        <% } %>
+            <% if (session) { %>
+            <div>
+            SESSION <br>
+            ========= <br>
+            <%- session %>
+            </div>
+            <% } %>
 
-        <div>
-          PARAMS <br>
-         ======== <br>
-          <%- dbg.params %>
-        </div>
+            <div>
+            PARAMS <br>
+            ======== <br>
+            <%- dbg.params %>
+            </div>
 
-        <div>
-          PROMPT <br>
-         ======== <br>
-          <%- dbg.prompt %>
+            <div>
+            PROMPT <br>
+            ======== <br>
+            <%- dbg.prompt %>
+            </div>
+        </details>
         </div>
-      </details>
-    </div>
+    <% } %>
   </body>
 </html>

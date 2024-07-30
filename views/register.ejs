@@ -1,8 +1,8 @@
 <form autocomplete="off" action="/oidc/interaction/<%= uid %>/reg" method="post">
-    <input required type="email" name="email" placeholder="Your email" autofocus="on">
-    <input required type="text" name="firstName" placeholder="Your first name" autofocus="on">
-    <input required type="text" name="lastName" placeholder="Your last name" autofocus="on">
-    <input required type="password" name="password" placeholder="enter password"autofocus="on">
+    <input required type="email" name="email" placeholder="Your email" autofocus="on" required>
+    <input required type="text" name="firstName" placeholder="Your first name" autofocus="on" required>
+    <input required type="text" name="lastName" placeholder="Your last name" autofocus="on" required>
+    <input required type="password" name="password" placeholder="and your password" autofocus="on" required>
 
     <button type="submit" class="login login-submit">Create account</button>
   </form>
